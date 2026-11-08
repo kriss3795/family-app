@@ -14,7 +14,7 @@ export default handler(async (req, res) => {
   if (b.a === "unsub") { await q(`DELETE FROM subs WHERE endpoint=$1`, [String(b.endpoint || "")]); return send(res, 200, { ok: true }); }
   if (b.a === "test") {
     const N = names((await kvGet("config"))?.v || DEFAULT_CONFIG);
-    const n = await sendPush(person, { title: "🔔 Family App", body: `¡Listo, ${N[person]}! Así te van a llegar los avisos.`, tag: "test" });
+    const n = await sendPush(person, { title: "🔔 The House App", body: `¡Listo, ${N[person]}! Así te van a llegar los avisos.`, tag: "test" });
     return send(res, 200, { ok: true, sent: n });
   }
   if (b.a === "count") {

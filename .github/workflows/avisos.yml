@@ -1,4 +1,4 @@
-name: Avisos Family App
+name: Avisos The House App
 # Revisa cada 10 minutos si hay tareas por vencer o atrasadas y envía las notificaciones push.
 on:
   schedule:
@@ -10,6 +10,6 @@ jobs:
     timeout-minutes: 2
     steps:
       - name: Llamar al revisor de avisos
-        run: curl -fsS --max-time 60 "${APP_URL:-https://family-app-lemon-ten.vercel.app}/api/cron"
+        run: curl -fsS --max-time 60 "${APP_URL:-https://thehouseapp.vercel.app}/api/cron"
         env:
           APP_URL: ${{ vars.APP_URL }}

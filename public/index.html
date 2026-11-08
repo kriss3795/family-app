@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Family App</title>
+<title>The House App</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#FBF6EE">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Family App">
+<meta name="apple-mobile-web-app-title" content="The House App">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="icon" href="/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -157,7 +157,7 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:25}
 <div class="wrap">
   <div class="top">
     <div>
-      <h1>Family App</h1>
+      <h1>The House App</h1>
       <div class="date" id="date"></div>
     </div>
     <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end"><button class="me" id="meBtn">Soy …</button><button class="me" id="instBtn">📲 Instalar</button></div>
@@ -654,7 +654,7 @@ function checkAlerts(){
   const mine=tasksFor(d).filter(t=>(t.who===me||t.who==="ambos")&&!isDone(ds,t.id));
   const late=mine.filter(taskLate);
   // badge en el título
-  document.title=(late.length?"("+late.length+") ":"")+"Family App";
+  document.title=(late.length?"("+late.length+") ":"")+"The House App";
   // atrasadas: un aviso por cada hora límite que se pasa
   const lateNew=late.filter(t=>!alerted["L"+ds+deadlineOf(t)]);
   if(lateNew.length){
@@ -679,7 +679,7 @@ function partnerDone(x){
   const t=((config&&config.tasks)||[]).find(y=>y.id===x.task); if(!t) return;
   const s=stats(today(),x.by);
   if(s.total&&s.done===s.total){showAlert("partner",`¡${NAMES[x.by]} completó todo lo suyo hoy!`,"El equipo va con todo. 🎉",[]);confetti();return}
-  toast(`💚 ${NAMES[x.by]} hizo: ${t.emoji} ${t.name}`); chime("partner"); sysNotify("Family App",`${NAMES[x.by]} hizo: ${t.name}`);
+  toast(`💚 ${NAMES[x.by]} hizo: ${t.emoji} ${t.name}`); chime("partner"); sysNotify("The House App",`${NAMES[x.by]} hizo: ${t.name}`);
 }
 
 // ---------- ajustes generales ----------
@@ -760,7 +760,7 @@ function isStandalone(){return matchMedia("(display-mode: standalone)").matches|
 $("#instBtn").onclick=async()=>{
   if(isStandalone()){toast("Ya está instalada ✓");return}
   if(deferredPrompt){deferredPrompt.prompt();const r=await deferredPrompt.userChoice;deferredPrompt=null;if(r.outcome==="accepted")toast("¡Instalada! 🎉");return}
-  openSheet(`<h3>📲 Instalar Family App</h3>
+  openSheet(`<h3>📲 Instalar The House App</h3>
   <p class="hint">Queda como una app en tu pantalla de inicio, con su ícono.</p>
   ${isIOS()?`<label class="f">iPhone (Safari)</label><div class="hint">1. Toca Compartir ⬆️ (abajo).<br>2. Elige <b>Agregar a inicio</b>.<br>3. Abre la app desde el ícono y activa los avisos en ⚙️ Ajustes → Avisos.</div>`
   :`<label class="f">Android (Chrome)</label><div class="hint">1. Menú ⋮ arriba a la derecha.<br>2. <b>Instalar app</b> o <b>Agregar a la pantalla principal</b>.<br>3. Abre la app desde el ícono.</div>`}
@@ -811,7 +811,7 @@ function showGate(mode){
   const g=$("#gate"); g.classList.add("on");
   const urlCode=new URLSearchParams(location.search).get("c");
   const draw=(exists)=>{
-    $("#gbox").innerHTML=`<div class="hero"></div><h2>Family App</h2>
+    $("#gbox").innerHTML=`<div class="hero"></div><h2>The House App</h2>
       ${exists?`<p class="hint">Escribe el código de la casa para entrar. Lo ve quien la creó en ⚙️ Ajustes.</p>
         <input class="t" id="gc" maxlength="6" value="${esc(urlCode||"")}" placeholder="ABC123" autocapitalize="characters">
         <div class="row"><button class="btn" id="gj">Entrar</button></div>`
@@ -821,7 +821,7 @@ function showGate(mode){
     if($("#gj")) $("#gj").onclick=async()=>{try{const r=await fetch("/api/setup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"join",code:$("#gc").value})});const j=await r.json();if(!r.ok)throw new Error(j.error);enter(j.code)}catch(e){$("#gm").textContent=e.message}};
     if($("#gn")) $("#gn").onclick=async()=>{try{const r=await fetch("/api/setup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"create"})});const j=await r.json();if(!r.ok)throw new Error(j.error);enter(j.code,true)}catch(e){$("#gm").textContent=e.message}};
   };
-  fetch("/api/setup").then(r=>r.json()).then(j=>draw(!!j.exists)).catch(()=>{$("#gbox").innerHTML=`<h2>Family App</h2><p class="hint">No se pudo conectar. Revisa tu internet.</p>`});
+  fetch("/api/setup").then(r=>r.json()).then(j=>draw(!!j.exists)).catch(()=>{$("#gbox").innerHTML=`<h2>The House App</h2><p class="hint">No se pudo conectar. Revisa tu internet.</p>`});
 }
 function enter(code,created){
   CODE=String(code).toUpperCase(); try{localStorage.setItem("fam_code",CODE)}catch(e){}
@@ -836,7 +836,7 @@ function shareCode(){
    <p class="hint">O que escriba el código: <b style="font-size:20px;letter-spacing:3px;color:var(--ink)">${esc(CODE)}</b></p>
    <div class="row"><button class="btn" id="sh">Compartir link</button><button class="btn ghost" id="x">Cerrar</button></div>`);
   $("#x").onclick=closeSheet;
-  $("#sh").onclick=async()=>{try{if(navigator.share){await navigator.share({title:"Family App",text:"Únete a nuestra casa en Family App 💛",url:link})}else{await navigator.clipboard.writeText(link);toast("Link copiado")}}catch(e){}};
+  $("#sh").onclick=async()=>{try{if(navigator.share){await navigator.share({title:"The House App",text:"Únete a nuestra casa en The House App 💛",url:link})}else{await navigator.clipboard.writeText(link);toast("Link copiado")}}catch(e){}};
 }
 
 // ---------- push ----------

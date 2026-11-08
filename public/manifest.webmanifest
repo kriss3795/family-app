@@ -1,6 +1,6 @@
 {
-  "name": "Family App",
-  "short_name": "Family App",
+  "name": "The House App",
+  "short_name": "House App",
   "description": "Tareas del hogar en equipo",
   "start_url": "/",
   "scope": "/",

@@ -8,9 +8,8 @@ const DEF_SLOTS = { manana: "11:00", tarde: "18:00", noche: "21:30" };
 const SLOT_NAMES = { manana: "la mañana", tarde: "la tarde", noche: "la noche" };
 
 // ---------- base de datos ----------
-let _q = null;
-async function getQuery() {
-  if (_q) return _q;
+let _ready = null;
+async function connect() {
   const env = process.env;
   const anyPg = () => { // busca cualquier variable con una URL de Postgres (p. ej. STORAGE_URL si Vercel usó otro prefijo)
     const ks = Object.keys(env).filter(k => /^postgres(ql)?:\/\//.test(String(env[k] || "")));
@@ -18,21 +17,32 @@ async function getQuery() {
   };
   const url = env.DATABASE_URL || env.POSTGRES_URL || env.STORAGE_URL || anyPg();
   if (!url) throw Object.assign(new Error("Falta conectar la base de datos (Neon) en Vercel."), { status: 500 });
-  if (process.env.LOCAL_PG) {
+  let run;
+  if (env.LOCAL_PG) {
     const pg = (await import("pg")).default;
     const pool = new pg.Pool({ connectionString: url });
-    _q = async (text, params = []) => (await pool.query(text, params)).rows;
+    run = async (text, params = []) => (await pool.query(text, params)).rows;
   } else {
     const { neon } = await import("@neondatabase/serverless");
     const sql = neon(url);
-    _q = (text, params = []) => sql.query(text, params);
+    run = (text, params = []) => sql.query(text, params);
   }
-  await _q(`CREATE TABLE IF NOT EXISTS kv (k text PRIMARY KEY, v jsonb NOT NULL, updated bigint NOT NULL)`);
-  await _q(`CREATE TABLE IF NOT EXISTS marcas (id text PRIMARY KEY, date text NOT NULL, task text NOT NULL, by text NOT NULL, at bigint NOT NULL)`);
-  await _q(`CREATE INDEX IF NOT EXISTS marcas_date ON marcas(date)`);
-  await _q(`CREATE TABLE IF NOT EXISTS subs (endpoint text PRIMARY KEY, person text NOT NULL, sub jsonb NOT NULL, created bigint NOT NULL)`);
-  await _q(`CREATE TABLE IF NOT EXISTS sent (id text PRIMARY KEY, at bigint NOT NULL)`);
-  return _q;
+  const ddl = [
+    `CREATE TABLE IF NOT EXISTS kv (k text PRIMARY KEY, v jsonb NOT NULL, updated bigint NOT NULL)`,
+    `CREATE TABLE IF NOT EXISTS marcas (id text PRIMARY KEY, date text NOT NULL, task text NOT NULL, by text NOT NULL, at bigint NOT NULL)`,
+    `CREATE INDEX IF NOT EXISTS marcas_date ON marcas(date)`,
+    `CREATE TABLE IF NOT EXISTS subs (endpoint text PRIMARY KEY, person text NOT NULL, sub jsonb NOT NULL, created bigint NOT NULL)`,
+    `CREATE TABLE IF NOT EXISTS sent (id text PRIMARY KEY, at bigint NOT NULL)`,
+  ];
+  for (const s of ddl) {
+    // dos arranques en paralelo pueden chocar creando la misma tabla: se reintenta una vez
+    try { await run(s); } catch (e) { await new Promise(r => setTimeout(r, 300)); await run(s); }
+  }
+  return run;
+}
+function getQuery() {
+  if (!_ready) _ready = connect().catch(e => { _ready = null; throw e; });
+  return _ready;
 }
 export async function q(text, params) { return (await getQuery())(text, params); }
 export async function kvGet(k) { const r = await q(`SELECT v, updated FROM kv WHERE k=$1`, [k]); return r[0] ? { v: r[0].v, updated: Number(r[0].updated) } : null; }
@@ -107,7 +117,11 @@ export const slotName = s => SLOT_NAMES[s] || "hoy";
 // ---------- push ----------
 export async function vapid() {
   let v = await kvGet("vapid");
-  if (!v) { const keys = webpush.generateVAPIDKeys(); await kvSet("vapid", keys); v = { v: keys }; }
+  if (!v) {
+    const keys = webpush.generateVAPIDKeys();
+    await q(`INSERT INTO kv(k,v,updated) VALUES('vapid',$1,$2) ON CONFLICT(k) DO NOTHING`, [JSON.stringify(keys), Date.now()]);
+    v = await kvGet("vapid"); // si otro proceso ganó, se usan sus llaves
+  }
   return v.v;
 }
 export async function sendPush(person, payload) {
@@ -128,4 +142,18 @@ export async function sendOnce(id, person, payload) {
   const r = await q(`INSERT INTO sent(id, at) VALUES($1,$2) ON CONFLICT DO NOTHING RETURNING id`, [id, Date.now()]);
   if (!r.length) return 0;
   return sendPush(person, payload);
+}
+
+// ---------- configuración con migraciones ----------
+// v2: tareas de la Vale en la semana pasan a la noche (llega ~18:00), esfuerzo ajustado y reparto ~59/41
+export async function getConfig() {
+  const row = await kvGet("config");
+  let cfg = row ? row.v : null;
+  if (!cfg) return { cfg: DEFAULT_CONFIG, updated: 0 };
+  if ((cfg.v || 1) < 2) {
+    cfg = { ...cfg, tasks: DEFAULT_CONFIG.tasks, v: 2 };
+    await kvSet("config", cfg);
+    return { cfg, updated: Date.now() };
+  }
+  return { cfg, updated: row.updated };
 }

@@ -72,6 +72,23 @@ export default {
    "assign": "kriss"
   },
   {
+   "id": "perros-grandes",
+   "name": "Comida y agua a los perros grandes (afuera)",
+   "emoji": "🦮",
+   "days": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "slot": "manana",
+   "peso": 1,
+   "assign": "kriss"
+  },
+  {
    "id": "perros",
    "name": "Comida y agua a los perros chicos",
    "emoji": "🐕",
@@ -97,23 +114,6 @@ export default {
    "slot": "manana",
    "peso": 1,
    "assign": "vale"
-  },
-  {
-   "id": "perros-grandes",
-   "name": "Comida y agua a los perros grandes (afuera)",
-   "emoji": "🦮",
-   "days": [
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6
-   ],
-   "slot": "manana",
-   "peso": 1,
-   "assign": "kriss"
   },
   {
    "id": "gatos",
@@ -147,17 +147,27 @@ export default {
    "name": "Soltar a Fauna",
    "emoji": "🐐",
    "days": [
-    0,
     1,
     2,
     3,
     4,
-    5,
-    6
+    5
    ],
    "slot": "manana",
    "peso": 1,
    "assign": "kriss"
+  },
+  {
+   "id": "fauna-finde",
+   "name": "Soltar a Fauna",
+   "emoji": "🐐",
+   "days": [
+    0,
+    6
+   ],
+   "slot": "manana",
+   "peso": 1,
+   "assign": "vale"
   },
   {
    "id": "areneros",
@@ -173,7 +183,7 @@ export default {
     6
    ],
    "slot": "tarde",
-   "peso": 2,
+   "peso": 1,
    "assign": "kriss"
   },
   {
@@ -203,17 +213,6 @@ export default {
    "assign": "kriss"
   },
   {
-   "id": "aspirar-vale",
-   "name": "Barrer o aspirar",
-   "emoji": "🧹",
-   "days": [
-    4
-   ],
-   "slot": "noche",
-   "peso": 2,
-   "assign": "vale"
-  },
-  {
    "id": "banos",
    "name": "Hacer el baño",
    "emoji": "🚽",
@@ -223,17 +222,6 @@ export default {
    "slot": "tarde",
    "peso": 3,
    "assign": "kriss"
-  },
-  {
-   "id": "banos-vale",
-   "name": "Hacer el baño",
-   "emoji": "🚽",
-   "days": [
-    5
-   ],
-   "slot": "noche",
-   "peso": 3,
-   "assign": "vale"
   },
   {
    "id": "basura",
@@ -247,33 +235,31 @@ export default {
    "assign": "kriss"
   },
   {
-   "id": "ficus",
-   "name": "Regar el ficus",
-   "emoji": "🪴",
+   "id": "fauna-guardar",
+   "name": "Guardar a Fauna",
+   "emoji": "🌾",
    "days": [
+    1,
+    2,
     3,
+    4,
+    5
+   ],
+   "slot": "tarde",
+   "peso": 1,
+   "assign": "kriss"
+  },
+  {
+   "id": "fauna-guardar-finde",
+   "name": "Guardar a Fauna",
+   "emoji": "🌾",
+   "days": [
+    0,
     6
    ],
    "slot": "tarde",
    "peso": 1,
    "assign": "vale"
-  },
-  {
-   "id": "fauna-guardar",
-   "name": "Guardar a Fauna",
-   "emoji": "🌾",
-   "days": [
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6
-   ],
-   "slot": "tarde",
-   "peso": 1,
-   "assign": "kriss"
   },
   {
    "id": "llegada-vale",
@@ -291,18 +277,6 @@ export default {
    "assign": "kriss"
   },
   {
-   "id": "microondas",
-   "name": "Limpiar microondas y horno",
-   "emoji": "🔥",
-   "days": [
-    6
-   ],
-   "slot": "tarde",
-   "peso": 2,
-   "assign": "alterna",
-   "first": "kriss"
-  },
-  {
    "id": "ropa",
    "name": "Lavar y tender ropa",
    "emoji": "🧺",
@@ -311,7 +285,29 @@ export default {
    ],
    "slot": "tarde",
    "peso": 2,
-   "assign": "kriss"
+   "assign": "vale"
+  },
+  {
+   "id": "microondas",
+   "name": "Limpiar microondas y horno",
+   "emoji": "🔥",
+   "days": [
+    6
+   ],
+   "slot": "tarde",
+   "peso": 2,
+   "assign": "vale"
+  },
+  {
+   "id": "aspirar-sab",
+   "name": "Barrer o aspirar",
+   "emoji": "🧹",
+   "days": [
+    6
+   ],
+   "slot": "tarde",
+   "peso": 2,
+   "assign": "vale"
   },
   {
    "id": "ropa-doblar",
@@ -386,6 +382,51 @@ export default {
    "first": "kriss"
   },
   {
+   "id": "aspirar-vale",
+   "name": "Barrer o aspirar",
+   "emoji": "🧹",
+   "days": [
+    4
+   ],
+   "slot": "noche",
+   "peso": 2,
+   "assign": "vale"
+  },
+  {
+   "id": "banos-vale",
+   "name": "Hacer el baño",
+   "emoji": "🚽",
+   "days": [
+    5
+   ],
+   "slot": "noche",
+   "peso": 3,
+   "assign": "vale"
+  },
+  {
+   "id": "basura-jue",
+   "name": "Sacar la basura",
+   "emoji": "🗑️",
+   "days": [
+    4
+   ],
+   "slot": "noche",
+   "peso": 1,
+   "assign": "vale"
+  },
+  {
+   "id": "ficus",
+   "name": "Regar el ficus",
+   "emoji": "🪴",
+   "days": [
+    3,
+    6
+   ],
+   "slot": "noche",
+   "peso": 1,
+   "assign": "vale"
+  },
+  {
    "id": "momo",
    "name": "Cuidar a Momo (comida y terrario)",
    "emoji": "🐿️",
@@ -400,8 +441,7 @@ export default {
    ],
    "slot": "noche",
    "peso": 1,
-   "assign": "alterna",
-   "first": "vale"
+   "assign": "vale"
   },
   {
    "id": "living",
@@ -419,7 +459,7 @@ export default {
    "slot": "noche",
    "peso": 1,
    "assign": "alterna",
-   "first": "vale"
+   "first": "kriss"
   },
   {
    "id": "dormitorio",
@@ -436,8 +476,7 @@ export default {
    ],
    "slot": "noche",
    "peso": 1,
-   "assign": "alterna",
-   "first": "kriss"
+   "assign": "vale"
   },
   {
    "id": "dientes-n",
@@ -456,17 +495,7 @@ export default {
    "peso": 1,
    "assign": "kriss",
    "personal": true
-  },
-  {
-   "id": "basura-jue",
-   "name": "Sacar la basura",
-   "emoji": "🗑️",
-   "days": [
-    4
-   ],
-   "slot": "noche",
-   "peso": 1,
-   "assign": "vale"
   }
- ]
+ ],
+ "v": 2
 };

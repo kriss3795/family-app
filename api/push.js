@@ -1,4 +1,4 @@
-import { handler, send, readBody, requireCasa, vapid, q, sendPush, names, kvGet, DEFAULT_CONFIG } from "./_lib.js";
+import { handler, send, readBody, requireCasa, vapid, q, sendPush, names, kvGet, getConfig } from "./_lib.js";
 
 export default handler(async (req, res) => {
   if (req.method === "GET") return send(res, 200, { publicKey: (await vapid()).publicKey });
@@ -13,9 +13,17 @@ export default handler(async (req, res) => {
   }
   if (b.a === "unsub") { await q(`DELETE FROM subs WHERE endpoint=$1`, [String(b.endpoint || "")]); return send(res, 200, { ok: true }); }
   if (b.a === "test") {
-    const N = names((await kvGet("config"))?.v || DEFAULT_CONFIG);
+    const N = names((await getConfig()).cfg);
     const n = await sendPush(person, { title: "🔔 The House App", body: `¡Listo, ${N[person]}! Así te van a llegar los avisos.`, tag: "test" });
     return send(res, 200, { ok: true, sent: n });
+  }
+  if (b.a === "health") {
+    const [subs, last, marks] = await Promise.all([
+      q(`SELECT person, count(*)::int AS n FROM subs GROUP BY person`),
+      kvGet("cron_last"),
+      q(`SELECT count(*)::int AS n FROM marcas`),
+    ]);
+    return send(res, 200, { db: true, subs: Object.fromEntries(subs.map(x => [x.person, x.n])), cronLast: last ? last.v : null, marks: marks[0].n });
   }
   if (b.a === "count") {
     const r = await q(`SELECT person, count(*)::int AS n FROM subs GROUP BY person`);

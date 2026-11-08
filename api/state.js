@@ -1,4 +1,4 @@
-import { handler, send, readBody, requireCasa, kvGet, kvSet, q, nowLocal, tasksFor, names, other, sendPush, originOf, DEFAULT_CONFIG } from "./_lib.js";
+import { handler, send, readBody, requireCasa, kvGet, kvSet, q, nowLocal, tasksFor, names, other, sendPush, originOf, getConfig } from "./_lib.js";
 
 const PEOPLE = ["kriss", "vale"];
 const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(String(s || ""));
@@ -9,11 +9,11 @@ export default handler(async (req, res) => {
 
   if (req.method === "GET") {
     const now = nowLocal();
-    const [cfg, nota] = await Promise.all([kvGet("config"), kvGet("nota")]);
+    const [cfg, nota] = await Promise.all([getConfig(), kvGet("nota")]);
     const since = new Date(Date.now() - 70 * 864e5).toISOString().slice(0, 10);
     const marks = await q(`SELECT id, date, task, by, at FROM marcas WHERE date >= $1`, [since]);
     return send(res, 200, {
-      config: cfg ? cfg.v : DEFAULT_CONFIG, configUpdated: cfg ? cfg.updated : 0,
+      config: cfg.cfg, configUpdated: cfg.updated,
       nota: nota ? nota.v : null,
       marks: marks.map(m => ({ ...m, at: Number(m.at) })),
       now,
@@ -21,7 +21,7 @@ export default handler(async (req, res) => {
   }
 
   const b = await readBody(req);
-  const cfg = (await kvGet("config"))?.v || DEFAULT_CONFIG;
+  const cfg = (await getConfig()).cfg;
   const N = names(cfg);
 
   if (b.a === "mark" || b.a === "unmark") {
@@ -52,7 +52,7 @@ export default handler(async (req, res) => {
     const c = b.config;
     if (!c || typeof c !== "object" || !Array.isArray(c.tasks)) return send(res, 400, { error: "Configuración inválida" });
     if (JSON.stringify(c).length > 200000) return send(res, 400, { error: "Configuración muy grande" });
-    await kvSet("config", c);
+    await kvSet("config", { ...c, v: Math.max(Number(c.v) || 0, 2) });
     return send(res, 200, { ok: true });
   }
 

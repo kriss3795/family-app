@@ -1,5 +1,5 @@
 // Revisa atrasos y envía avisos push. Lo llama GitHub Actions cada ~10 min. Es seguro llamarlo varias veces: cada aviso sale una sola vez.
-import { handler, send, kvGet, q, nowLocal, tasksFor, deadlineOf, mins, names, other, sendOnce, slotName, DEFAULT_CONFIG } from "./_lib.js";
+import { handler, send, kvGet, kvSet, getConfig, q, nowLocal, tasksFor, deadlineOf, mins, names, other, sendOnce, slotName, DEFAULT_CONFIG } from "./_lib.js";
 
 const FRASES = ["Somos un equipo 💛", "Un paso a la vez.", "Hecho es mejor que perfecto.", "Por nosotros y por Falco 🐣", "Cada check suma para el premio 🏆"];
 const list = ts => ts.slice(0, 4).map(t => `${t.emoji || "✅"} ${t.name}`).join(" · ") + (ts.length > 4 ? ` y ${ts.length - 4} más` : "");
@@ -7,7 +7,7 @@ const list = ts => ts.slice(0, 4).map(t => `${t.emoji || "✅"} ${t.name}`).join
 export default handler(async (req, res) => {
   const casa = await kvGet("casa");
   if (!casa) return send(res, 200, { skip: "sin casa" });
-  const cfg = (await kvGet("config"))?.v || DEFAULT_CONFIG;
+  const cfg = (await getConfig()).cfg;
   const av = { warn: 30, partner: true, morning: "08:30", ...(cfg.avisos || {}) };
   const N = names(cfg);
   const { date, mins: now } = nowLocal();
@@ -53,5 +53,6 @@ export default handler(async (req, res) => {
     }
   }
   if (Math.random() < 0.05) await q(`DELETE FROM sent WHERE at < $1`, [Date.now() - 40 * 864e5]);
+  await kvSet("cron_last", { at: Date.now(), date, now, sent: out.filter(x => x[x.length - 1] > 0).length });
   send(res, 200, { date, now, out });
 });

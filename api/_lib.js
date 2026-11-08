@@ -221,6 +221,8 @@ export async function getConfig() {
     }
     cfg = { ...cfg, v: 11, tasks };
   }
+  // v12: el living no se ordena el fin de semana
+  if (cfg.v < 12) cfg = { ...cfg, v: 12, tasks: (cfg.tasks || []).map(t => t.id === "living" ? { ...t, days: (t.days || []).filter(d => d !== 0 && d !== 6) } : t).filter(t => t.id !== "living" || t.days.length) };
   if (cfg.v !== start) {
     await kvSet("config", cfg);
     const r = await kvGet("config");

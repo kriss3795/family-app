@@ -405,11 +405,9 @@ export default {
    "name": "Ordenar el living",
    "emoji": "🛋️",
    "days": [
-    0,
     2,
     4,
-    5,
-    6
+    5
    ],
    "slot": "noche",
    "peso": 1,
@@ -451,5 +449,5 @@ export default {
    "personal": true
   }
  ],
- "v": 11
+ "v": 12
 };

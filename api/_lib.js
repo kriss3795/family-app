@@ -100,7 +100,8 @@ export function whoFor(t, dateStr, config) {
   if (d0 >= anchor) { for (let x = anchor; x < d0; x = addDaysUTC(x, 1)) if (days.includes(x.getUTCDay())) idx++; }
   else { for (let x = d0; x < anchor; x = addDaysUTC(x, 1)) if (days.includes(x.getUTCDay())) idx--; }
   const first = t.first || "kriss", other = first === "kriss" ? "vale" : "kriss";
-  return Math.abs(idx) % 2 === 0 ? first : other;
+  const fl = (t.flips || []).filter(f => f <= dateStr).length; // «invertir turnos» desde esa fecha
+  return (Math.abs(idx) + fl) % 2 === 0 ? first : other;
 }
 export function tasksFor(dateStr, config) {
   const wd = parseDate(dateStr).getUTCDay();
@@ -112,6 +113,8 @@ export function deadlineOf(t, config) {
 }
 export const names = c => ({ kriss: (c.names && c.names.kriss) || "Kriss", vale: (c.names && c.names.vale) || "Vale" });
 export const other = p => (p === "kriss" ? "vale" : "kriss");
+// ¿esta persona quiere avisos de lo que hace / atrasa el otro? (antes era un sí/no compartido)
+export function partnerOn(cfg, person) { const v = (cfg.avisos || {}).partner; return v && typeof v === "object" ? v[person] !== false : v !== false; }
 export const slotName = s => SLOT_NAMES[s] || "hoy";
 
 // ---------- push ----------
@@ -133,7 +136,7 @@ export async function sendPush(person, payload) {
   let ok = 0;
   await Promise.all(rows.map(async r => {
     try { await webpush.sendNotification(r.sub, JSON.stringify(payload), { TTL: 3600, urgency: "high" }); ok++; }
-    catch (e) { if (e.statusCode === 404 || e.statusCode === 410) await q(`DELETE FROM subs WHERE endpoint=$1`, [r.endpoint]); else console.error("push", e.statusCode, e.body); }
+    catch (e) { if (e.statusCode === 404 || e.statusCode === 410 || e.statusCode === 403) await q(`DELETE FROM subs WHERE endpoint=$1`, [r.endpoint]); else console.error("push", e.statusCode, e.body); }
   }));
   return ok;
 }
@@ -141,7 +144,11 @@ export async function sendPush(person, payload) {
 export async function sendOnce(id, person, payload) {
   const r = await q(`INSERT INTO sent(id, at) VALUES($1,$2) ON CONFLICT DO NOTHING RETURNING id`, [id, Date.now()]);
   if (!r.length) return 0;
-  return sendPush(person, payload);
+  let n = 0;
+  try { n = await sendPush(person, payload); } catch (e) { console.error(e); }
+  // si no llegó a ningún teléfono, se borra la marca para reintentar en la próxima revisión
+  if (!n) await q(`DELETE FROM sent WHERE id=$1`, [id]);
+  return n;
 }
 
 // ---------- configuración con migraciones ----------
@@ -153,7 +160,8 @@ export async function getConfig() {
   if ((cfg.v || 1) < 2) {
     cfg = { ...cfg, tasks: DEFAULT_CONFIG.tasks, v: 2 };
     await kvSet("config", cfg);
-    return { cfg, updated: Date.now() };
+    const r = await kvGet("config");
+    return { cfg: r.v, updated: r.updated };
   }
   return { cfg, updated: row.updated };
 }

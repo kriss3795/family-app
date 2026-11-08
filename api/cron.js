@@ -1,5 +1,5 @@
 // Revisa atrasos y envía avisos push. Lo llama GitHub Actions cada ~10 min. Es seguro llamarlo varias veces: cada aviso sale una sola vez.
-import { handler, send, kvGet, kvSet, getConfig, q, nowLocal, tasksFor, deadlineOf, mins, names, other, sendOnce, slotName, DEFAULT_CONFIG } from "./_lib.js";
+import { handler, send, kvGet, kvSet, getConfig, partnerOn, q, nowLocal, tasksFor, deadlineOf, mins, names, other, sendOnce, slotName, DEFAULT_CONFIG } from "./_lib.js";
 
 const FRASES = ["Somos un equipo 💛", "Un paso a la vez.", "Hecho es mejor que perfecto.", "Por nosotros y por Falco 🐣", "Cada check suma para el premio 🏆"];
 const list = ts => ts.slice(0, 4).map(t => `${t.emoji || "✅"} ${t.name}`).join(" · ") + (ts.length > 4 ? ` y ${ts.length - 4} más` : "");
@@ -44,7 +44,7 @@ export default handler(async (req, res) => {
         })]);
         // también le avisa al otro (solo lo que es de esa persona)
         const own = ts.filter(t => t.who === p);
-        if (own.length && av.partner !== false) {
+        if (own.length && partnerOn(cfg, other(p))) {
           out.push(["late-partner", other(p), dl, await sendOnce(`latep:${date}:${p}:${dl}`, other(p), {
             title: `🫶 ${N[p]} va ${atr(p)}`, body: `Con: ${list(own)}. Un mensajito de ánimo ayuda 💛`, tag: `latep-${dl}`,
           })]);

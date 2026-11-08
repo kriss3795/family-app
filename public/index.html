@@ -238,7 +238,9 @@ const DAYNAMES=["domingo","lunes","martes","miércoles","jueves","viernes","sáb
 const DEF_SLOTS=[{id:"manana",name:"Mañana",until:"11:00",icon:"🌅"},{id:"tarde",name:"Tarde",until:"18:00",icon:"🌤️"},{id:"noche",name:"Noche",until:"21:30",icon:"🌙"}];
 let SLOTS=DEF_SLOTS.map(s=>({...s}));
 const DEF_ALERTS={sound:true,big:true,warn:30,partner:true,morning:"08:30"};
-function alerts(){return {...DEF_ALERTS,...((config&&config.avisos)||{})}}
+function localAlerts(){try{return JSON.parse(localStorage.getItem("fam_alerts")||"{}")}catch(e){return {}}}
+function partnerOn(p){const v=((config&&config.avisos)||{}).partner;return typeof v==="object"&&v?v[p]!==false:v!==false}
+function alerts(){const s={...DEF_ALERTS,...((config&&config.avisos)||{}),...localAlerts()};s.partner=partnerOn(me||"kriss");return s}
 function applySettings(){
   const n=(config&&config.names)||{};
   NAMES.kriss=n.kriss||"Kriss"; NAMES.vale=n.vale||"Vale";
@@ -305,7 +307,8 @@ function whoFor(t,date){
   if(d0>=anchor){for(let x=new Date(anchor);x<d0;x=addDays(x,1)) if(days.includes(x.getDay())) idx++;}
   else{for(let x=new Date(d0);x<anchor;x=addDays(x,1)) if(days.includes(x.getDay())) idx--;}
   const first=t.first||"kriss", other=first==="kriss"?"vale":"kriss";
-  return (Math.abs(idx)%2===0)?first:other;
+  const ds=iso(d0), fl=(t.flips||[]).filter(f=>f<=ds).length; // cada «invertir» cambia desde su fecha en adelante
+  return ((Math.abs(idx)+fl)%2===0)?first:other;
 }
 function tasksFor(date){
   if(!config||!Array.isArray(config.tasks)) return [];
@@ -377,7 +380,7 @@ function renderHoy(){
       nx=`<div class="nextc"><div class="emo">${esc(t.emoji)}</div><div><div class="lbl">Ahora te toca · quedan ${pend.length}</div><div class="nm">${esc(t.name)}</div></div><button id="nextBtn" data-id="${esc(t.id)}">Listo ✓</button></div>`;}
   }
   $("#next").innerHTML=nx;
-  if($("#nextBtn")) $("#nextBtn").onclick=e=>toggle(e.currentTarget.dataset.id);
+  if($("#nextBtn")) $("#nextBtn").onclick=e=>toggle(e.currentTarget.dataset.id,{onlyMark:true});
   let h="";
   for(const s of SLOTS){
     const items=list.filter(t=>(t.slot||"manana")===s.id);
@@ -390,8 +393,8 @@ function renderHoy(){
       const m=marks[key(ds,t.id)], done=!!m;
       const late=!done&&taskLate(t);
       const other=me&&t.who!==me&&t.who!=="ambos";
-      const metaWho=`<span class="chip ${t.who}">${NAMES[t.who]||t.who}</span>`;
-      const metaDone=done?`hecho por ${NAMES[m.by]||"alguien"} · ${new Date(m.at).toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit"})}`:(late?"⏰ atrasada (era hasta las "+deadlineOf(t)+")":"hasta las "+deadlineOf(t));
+      const metaWho=`<span class="chip ${esc(t.who)}">${esc(NAMES[t.who]||t.who)}</span>`;
+      const metaDone=done?`hecho por ${NAMES[m.by]||"alguien"} · ${new Date(m.at).toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit"})}`:(late?"⏰ atrasada (era hasta las "+esc(deadlineOf(t))+")":"hasta las "+esc(deadlineOf(t)));
       h+=`<div class="task ${done?"done":""} ${done&&m.by==="vale"?"byvale":""} ${late?"late":""} ${other?"other":""}" data-id="${esc(t.id)}">
         <div class="emo">${esc(t.emoji||"✅")}</div>
         <div class="body"><div class="name">${esc(t.name)}</div><div class="meta">${metaWho}${metaDone}</div></div>
@@ -478,7 +481,7 @@ function renderAjustes(){
   if(!loaded.config){$("#setlist").innerHTML="";return}
   const tasks=(config&&config.tasks)||[];
   if(!tasks.length){$("#setlist").innerHTML=`<div class="empty">Aún no hay tareas.</div>`;return}
-  $("#setlist").innerHTML=tasks.map((t,i)=>`<div class="setrow" data-i="${i}"><div class="emo">${esc(t.emoji)}</div><div class="body"><div class="name">${esc(t.name)}</div><div class="meta">${esc(assignText(t))} · ${describeDays(t.days)} · ${(SLOTS.find(s=>s.id===t.slot)||SLOTS[0]).name.toLowerCase()} · hasta ${deadlineOf(t)}${t.personal?" · autocuidado":""}</div></div><div>›</div></div>`).join("");
+  $("#setlist").innerHTML=tasks.map((t,i)=>`<div class="setrow" data-i="${i}"><div class="emo">${esc(t.emoji)}</div><div class="body"><div class="name">${esc(t.name)}</div><div class="meta">${esc(assignText(t))} · ${describeDays(t.days)} · ${(SLOTS.find(s=>s.id===t.slot)||SLOTS[0]).name.toLowerCase()} · hasta ${esc(deadlineOf(t))}${t.personal?" · autocuidado":""}</div></div><div>›</div></div>`).join("");
   document.querySelectorAll("#setlist .setrow").forEach(el=>el.onclick=()=>editTask(+el.dataset.i));
 }
 function renderAll(){renderHoy();renderSemana();renderAjustes();renderNote();renderPremios();renderGeneralMeta()}
@@ -494,12 +497,12 @@ function weekInfo(){
   const fri=addDays(mon,4); const anchor=parse((config&&config.anchor)||"2026-11-09");
   if(fri<anchor){ const nm=addDays(mon,7); return {done:0,total:0,pct:0,mon:nm,fri:addDays(nm,4),closed:false,pre:true}; }
   const s=rangeStats(mon<anchor?anchor:mon,fri);
-  return {...s,mon,fri,closed:t>fri};
+  return {...s,mon,fri,closed:t>=addDays(fri,1)};
 }
 function monthInfo(off){ // off=0 mes actual, -1 mes anterior
   const t=today(); const first=new Date(t.getFullYear(),t.getMonth()+off,1); const last=new Date(first.getFullYear(),first.getMonth()+1,0);
   const realFirst=first<parse((config&&config.anchor)||"2026-11-09")?parse((config&&config.anchor)||"2026-11-09"):first;
-  return {...rangeStats(realFirst,last),first,last,closed:t>last};
+  return {...rangeStats(realFirst,last),first,last,closed:t>=addDays(last,1)};
 }
 function renderPremios(){
   if(!loaded.config){$("#prizes").innerHTML="";return}
@@ -532,7 +535,7 @@ function editPrizes(){
   document.querySelectorAll("#pMeta .pill").forEach(x=>x.onclick=()=>{document.querySelectorAll("#pMeta .pill").forEach(y=>y.classList.remove("on"));x.classList.add("on")});
   $("#pC").onclick=closeSheet;
   $("#pG").onclick=async()=>{const pr={semana:$("#pS").value.trim()||DEF_PRIZES.semana,mes:$("#pM").value.trim()||DEF_PRIZES.mes,meta:+(($("#pMeta .pill.on")||{dataset:{v:90}}).dataset.v)};
-    await saveConfig({...(config||{anchor:"2026-11-09",tasks:[]}),premios:pr});closeSheet()};
+    if(await saveConfig({...(config||{anchor:"2026-11-09",tasks:[]}),premios:pr}))closeSheet()};
 }
 
 function renderNote(){
@@ -544,12 +547,14 @@ function renderNote(){
 
 // ---------- acciones ----------
 let busy={};
-async function toggle(id){
+let markGen=0;
+async function toggle(id,opt){
   if(!CODE){showGate();return}
   if(!me){pickMe();return}
   const ds=iso(today()), k=key(ds,id);
-  if(busy[k]) return; busy[k]=true;
+  if(busy[k]) return; busy[k]=true; markGen++;
   const was=!!marks[k], prevMark=marks[k];
+  if(was&&opt&&opt.onlyMark){busy[k]=false;return}
   try{
     if(was){ delete marks[k]; renderAll(); await api("/api/state",{a:"unmark",date:ds,task:id}); }
     else{
@@ -562,7 +567,7 @@ async function toggle(id){
       else {burst();toast(arr[Math.floor(Math.random()*arr.length)])}
     }
   }catch(e){toast("No se pudo guardar, revisa tu conexión");if(was)marks[k]=prevMark;else delete marks[k];renderAll()}
-  busy[k]=false; refresh();
+  busy[k]=false; markGen++; refresh(true);
 }
 
 function pickMe(){
@@ -594,7 +599,7 @@ function editTask(i){
   $("#fCancel").onclick=closeSheet;
   if(!isNew) $("#fDel").onclick=async()=>{
     if($("#fDel").dataset.sure!=="1"){$("#fDel").dataset.sure="1";$("#fDel").textContent="¿Seguro?";return}
-    const tasks=config.tasks.slice();tasks.splice(i,1);await saveConfig({...config,tasks});closeSheet();
+    const tasks=config.tasks.filter(x=>x.id!==t.id);if(await saveConfig({...config,tasks}))closeSheet();
   };
   $("#fSave").onclick=async()=>{
     const name=$("#fName").value.trim(); if(!name){$("#fName").focus();return}
@@ -605,16 +610,17 @@ function editTask(i){
     nt.peso=+$("#fPeso .pill.on").dataset.v; nt.personal=$("#fPers .pill.on").dataset.v==="1";
     const hv=$("#fHora").value; if(hv) nt.hora=hv; else delete nt.hora;
     if(!nt.days.length){toast("Elige al menos un día");return}
-    const tasks=((config&&config.tasks)||[]).slice(); if(isNew) tasks.push(nt); else tasks[i]=nt;
-    await saveConfig({...(config||{anchor:"2026-11-09"}),tasks});closeSheet();
+    const tasks=((config&&config.tasks)||[]).slice(); const at=tasks.findIndex(x=>x.id===t.id);
+    if(isNew||at<0) tasks.push(nt); else tasks[at]=nt;
+    if(await saveConfig({...(config||{anchor:"2026-11-09"}),tasks}))closeSheet();
   };
 }
 let saving=false;
 async function saveConfig(c){
-  if(saving) return; saving=true;
-  try{await api("/api/state",{a:"config",config:c});config=c;applySettings();renderAll();toast("Guardado ✓")}
-  catch(e){toast("No se pudo guardar: "+e.message)}
-  saving=false;
+  if(saving){toast("Guardando…");return false} saving=true; let ok=false;
+  try{const r=await api("/api/state",{a:"config",config:c,base:lastCfgUpd});config=r.config||c;lastCfgUpd=r.updated||lastCfgUpd;applySettings();renderAll();toast("Guardado ✓");ok=true}
+  catch(e){ if(e.status===409){toast("La otra persona cambió algo recién. Revisa y guarda de nuevo.");firstLoad=true;await refresh();closeSheet()} else toast("No se pudo guardar: "+e.message)}
+  saving=false; return ok;
 }
 function editNote(){
   if(!me){pickMe();return}
@@ -651,7 +657,7 @@ function showAlert(kind,title,sub,items){
     (items||[]).map(t=>`<div class="al"><span>${esc(t.emoji)}</span>${esc(t.name)}<button class="btn small" data-id="${esc(t.id)}">Listo ✓</button></div>`).join("")+
     `<div class="row"><button class="btn ${items&&items.length?"ghost":""}" id="alOk">${kind==="partner"?"¡Vamos equipo!":"Lo hago ahora 💪"}</button></div>`;
   const ov=$("#alert"); ov.className="alert on "+kind;
-  box.querySelectorAll(".al button").forEach(b=>b.onclick=async()=>{b.disabled=true;await toggle(b.dataset.id);b.closest(".al").style.opacity=.4;b.textContent="✓"});
+  box.querySelectorAll(".al button").forEach(b=>b.onclick=async()=>{b.disabled=true;await toggle(b.dataset.id,{onlyMark:true});b.closest(".al").style.opacity=.4;b.textContent="✓"});
   $("#alOk").onclick=()=>{ov.className="alert"};
   chime(kind); sysNotify(title,sub);
 }
@@ -702,23 +708,24 @@ function renderGeneralMeta(){
 function editNames(){
   openSheet(`<h3>Nombres</h3><label class="f">Persona verde</label><input class="t" id="nK" value="${esc(NAMES.kriss)}"><label class="f">Persona coral</label><input class="t" id="nV" value="${esc(NAMES.vale)}">
   <div class="row"><button class="btn ghost" id="x">Cancelar</button><button class="btn" id="g">Guardar</button></div>`);
-  $("#x").onclick=closeSheet;$("#g").onclick=async()=>{await saveSetting({names:{kriss:$("#nK").value.trim()||"Kriss",vale:$("#nV").value.trim()||"Vale"}});closeSheet()};
+  $("#x").onclick=closeSheet;$("#g").onclick=async()=>{if(await saveSetting({names:{kriss:$("#nK").value.trim()||"Kriss",vale:$("#nV").value.trim()||"Vale"}}))closeSheet()};
 }
 function editSlots(){
   openSheet(`<h3>Horarios del día</h3><p class="hint">Hora límite de cada momento. Pasada esa hora, las tareas se marcan como atrasadas y suena el aviso.</p>`+
     SLOTS.map(s=>`<label class="f">${s.icon} ${s.name}</label><input class="t" type="time" id="sl_${s.id}" value="${s.until}">`).join("")+
     `<div class="row"><button class="btn ghost" id="x">Cancelar</button><button class="btn" id="g">Guardar</button></div>`);
-  $("#x").onclick=closeSheet;$("#g").onclick=async()=>{const o={};SLOTS.forEach(s=>{o[s.id]={until:$("#sl_"+s.id).value||s.until}});await saveSetting({slots:o});closeSheet()};
+  $("#x").onclick=closeSheet;$("#g").onclick=async()=>{const o={};SLOTS.forEach(s=>{o[s.id]={until:$("#sl_"+s.id).value||s.until}});if(await saveSetting({slots:o}))closeSheet()};
 }
 function editAlerts(){
   const a=alerts();
   const yn=(id,v,l)=>`<label class="f">${l}</label><div class="pills" id="${id}"><button class="pill ${v?"on":""}" data-v="1">Sí</button><button class="pill ${!v?"on":""}" data-v="0">No</button></div>`;
   const canSys=pushSupported();
   openSheet(`<h3>Avisos</h3>
+    <p class="hint">La alerta grande y el sonido son de este teléfono. «Avisarme cuando el otro…» es tuyo. El aviso previo y el saludo valen para los dos.</p>
     ${yn("aBig",a.big,"Alerta grande en pantalla (en vez de un aviso chico)")}
     ${yn("aSnd",a.sound,"Sonido y vibración")}
     <label class="f">Aviso antes de la hora límite</label><div class="pills" id="aWarn">${[0,15,30,60].map(v=>`<button class="pill ${a.warn===v?"on":""}" data-v="${v}">${v?v+" min":"No"}</button>`).join("")}</div>
-    ${yn("aPar",a.partner,"Avisarme cuando el otro marca una tarea")}
+    ${yn("aPar",a.partner,"Avisarme cuando el otro marca una tarea o se atrasa")}
     <label class="f">Notificaciones al celular (aunque la app esté cerrada)</label>
     ${canSys?`<div class="row" style="margin-top:0"><button class="btn ghost" id="aSys">${pushOn?"✓ Activadas · reactivar":"🔔 Activar en este teléfono"}</button><button class="btn ghost" id="aPush">Enviarme una de prueba</button></div><div class="hint" id="aSysH" style="margin-top:6px">Te llegan: buenos días, aviso antes de la hora, atrasos tuyos y del otro, y cuando el otro marca algo.</div>`:`<div class="hint">${isIOS()?"En iPhone: primero instala la app (botón 📲 Instalar) y ábrela desde el ícono; ahí aparece esta opción.":"Este navegador no permite notificaciones. Prueba con Chrome."}</div>`}
     <label class="f">Saludo de buenos días</label><input class="t" type="time" id="aMorning" value="${esc(a.morning||"08:30")}">
@@ -729,7 +736,11 @@ function editAlerts(){
   if($("#aPush")) $("#aPush").onclick=async()=>{try{const r=await api("/api/push",{a:"test",person:me});$("#aSysH").textContent=r.sent?"✓ Enviada. Debería llegarte en unos segundos.":"Este teléfono aún no tiene avisos activados."}catch(e){$("#aSysH").textContent="Error: "+e.message}};
   $("#aTest").onclick=()=>{unlockAudio();closeSheet();const d=today();const l=tasksFor(d).filter(t=>t.who===me||t.who==="ambos").slice(0,2);showAlert("late","Así se ve un aviso","Esto aparece cuando se pasa la hora de una tarea.",l)};
   const v=sel=>$(sel+" .pill.on").dataset.v;
-  $("#x").onclick=closeSheet;$("#g").onclick=async()=>{await saveSetting({avisos:{big:v("#aBig")==="1",sound:v("#aSnd")==="1",partner:v("#aPar")==="1",warn:+v("#aWarn"),morning:$("#aMorning").value||"08:30"}});closeSheet()};
+  $("#x").onclick=closeSheet;$("#g").onclick=async()=>{
+    try{localStorage.setItem("fam_alerts",JSON.stringify({big:v("#aBig")==="1",sound:v("#aSnd")==="1"}))}catch(e){}
+    const old=((config&&config.avisos)||{}), op=old.partner; const par=typeof op==="object"&&op?{...op}:{kriss:op!==false,vale:op!==false};
+    par[me||"kriss"]=v("#aPar")==="1";
+    if(await saveSetting({avisos:{...old,partner:par,warn:+v("#aWarn"),morning:$("#aMorning").value||"08:30"}}))closeSheet()};
 }
 function editQuotes(){
   const f=((config&&config.frases)||[]).slice();
@@ -740,13 +751,14 @@ function editQuotes(){
     <div class="row"><button class="btn ghost" id="x">Cancelar</button><button class="btn" id="g">Guardar</button></div>`);
     document.querySelectorAll("#sheet .btn.danger").forEach(b=>b.onclick=()=>{f.splice(+b.dataset.i,1);draw()});
     $("#qA").onclick=()=>{const q=$("#qN").value.trim();if(q){f.push(q);draw()}};
-    $("#x").onclick=closeSheet;$("#g").onclick=async()=>{const q=$("#qN").value.trim();if(q)f.push(q);await saveSetting({frases:f});closeSheet()};
+    $("#x").onclick=closeSheet;$("#g").onclick=async()=>{const q=$("#qN").value.trim();if(q)f.push(q);if(await saveSetting({frases:f}))closeSheet()};
   };draw();
 }
 async function swapTurns(){
   if(!config||!config.tasks) return;
-  const tasks=config.tasks.map(t=>t.assign==="alterna"?{...t,first:t.first==="vale"?"kriss":"vale"}:t);
-  await saveConfig({...config,tasks});
+  const td=iso(today());
+  const tasks=config.tasks.map(t=>t.assign==="alterna"?{...t,flips:[...(t.flips||[]).filter(f=>f!==td),td]}:t);
+  return saveConfig({...config,tasks});
 }
 
 // ---------- ui util ----------
@@ -784,7 +796,7 @@ $("#genHealth").onclick=async()=>{
     const ago=r.cronLast?Math.round((Date.now()-r.cronLast.at)/60000):null;
     let sub=null; try{sub=swReg&&await swReg.pushManager.getSubscription()}catch(e){}
     $("#hl").innerHTML=ok(true,"Base de datos (Neon) conectada · "+r.marks+" tareas marcadas en total")+
-      ok(!!sub&&Notification.permission==="granted",sub?"Avisos activados en este teléfono":"Avisos NO activados en este teléfono")+
+      ok(!!sub&&("Notification" in window)&&Notification.permission==="granted",sub?"Avisos activados en este teléfono":"Avisos NO activados en este teléfono")+
       ok((r.subs.kriss||0)>0,esc(NAMES.kriss)+": "+(r.subs.kriss||0)+" teléfono(s) con avisos")+
       ok((r.subs.vale||0)>0,esc(NAMES.vale)+": "+(r.subs.vale||0)+" teléfono(s) con avisos")+
       ok(ago!==null&&ago<40,ago===null?"El revisor automático aún no ha corrido (parte en unos minutos)":"Revisor automático: corrió hace "+ago+" min");
@@ -810,14 +822,17 @@ async function api(path,body){
   const r=await fetch(path,{method:body?"POST":"GET",headers:{"Content-Type":"application/json","X-Casa":CODE||""},body:body?JSON.stringify(body):undefined});
   const j=await r.json().catch(()=>({}));
   if(r.status===401){try{localStorage.removeItem("fam_code")}catch(e){};CODE=null;showGate();}
-  if(!r.ok) throw new Error(j.error||("Error "+r.status));
+  if(!r.ok) throw Object.assign(new Error(j.error||("Error "+r.status)),{status:r.status});
   return j;
 }
-let firstLoad=true, fetching=false, lastCfgUpd=0;
-async function refresh(){
-  if(!CODE||fetching) return; fetching=true;
+let firstLoad=true, fetching=false, lastCfgUpd=0, refreshAgain=false;
+async function refresh(force){
+  if(!CODE) return;
+  if(fetching){ if(force) refreshAgain=true; return; }
+  fetching=true; const gen=markGen;
   try{
     const s=await api("/api/state");
+    if(gen!==markGen){ refreshAgain=true; throw "stale"; } // hubo un toque mientras cargaba: se descarta y se pide de nuevo
     const prev=marks;
     if(s.configUpdated!==lastCfgUpd||firstLoad){config=s.config;lastCfgUpd=s.configUpdated;applySettings()}
     const m={}; (s.marks||[]).forEach(x=>{m[x.id]=x}); marks=m;
@@ -826,8 +841,9 @@ async function refresh(){
     loaded.config=true;loaded.marks=true;firstLoad=false;
     $("#status").textContent="Sincronizado con "+(me==="vale"?NAMES.kriss:NAMES.vale)+" ✓";
     renderAll();checkAlerts();
-  }catch(e){ if(CODE) $("#status").textContent="Sin conexión. Reintentando…"; }
+  }catch(e){ if(e!=="stale"&&CODE) $("#status").textContent="Sin conexión. Reintentando…"; }
   fetching=false;
+  if(refreshAgain){ refreshAgain=false; setTimeout(()=>refresh(),300); }
 }
 function showGate(mode){
   const g=$("#gate"); g.classList.add("on");
@@ -871,10 +887,14 @@ async function enablePush(){
   try{
     const perm=await Notification.requestPermission();
     if(perm!=="granted") return "No diste permiso. Puedes activarlo en los ajustes del teléfono → Notificaciones.";
-    swReg=swReg||await navigator.serviceWorker.ready;
-    const {publicKey}=await api("/api/push");
+    swReg=swReg||await navigator.serviceWorker.register("/sw.js");
+    const {publicKey}=await api("/api/push"); const key=b64ToU8(publicKey);
     let sub=await swReg.pushManager.getSubscription();
-    if(!sub) sub=await swReg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToU8(publicKey)});
+    if(sub){ // si la suscripción usa una llave vieja, se rehace
+      const ak=sub.options&&sub.options.applicationServerKey; const cur=ak?new Uint8Array(ak):null;
+      if(cur&&(cur.length!==key.length||cur.some((x,i)=>x!==key[i]))){await sub.unsubscribe();sub=null}
+    }
+    if(!sub) sub=await swReg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
     await api("/api/push",{a:"sub",sub:sub.toJSON(),person:me});
     pushOn=true; renderPushBanner();
     return "✓ ¡Activadas! Te llegarán aunque la app esté cerrada.";

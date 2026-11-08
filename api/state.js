@@ -1,4 +1,4 @@
-import { handler, send, readBody, requireCasa, kvGet, kvSet, q, nowLocal, tasksFor, names, other, sendPush, originOf, getConfig } from "./_lib.js";
+import { handler, send, readBody, requireCasa, kvGet, kvSet, q, nowLocal, tasksFor, names, other, sendPush, originOf, getConfig, partnerOn } from "./_lib.js";
 
 const PEOPLE = ["kriss", "vale"];
 const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(String(s || ""));
@@ -33,7 +33,7 @@ export default handler(async (req, res) => {
     const by = PEOPLE.includes(b.by) ? b.by : "kriss";
     const ins = await q(`INSERT INTO marcas(id,date,task,by,at) VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO NOTHING RETURNING id`, [id, date, task, by, Date.now()]);
     // aviso al otro
-    if (ins.length && date === nowLocal().date && (cfg.avisos || {}).partner !== false) {
+    if (ins.length && date === nowLocal().date && partnerOn(cfg, other(by))) {
       const t = (cfg.tasks || []).find(x => x.id === task);
       if (t) {
         const list = tasksFor(date, cfg).filter(x => x.who === by || x.who === "ambos");
@@ -52,8 +52,14 @@ export default handler(async (req, res) => {
     const c = b.config;
     if (!c || typeof c !== "object" || !Array.isArray(c.tasks)) return send(res, 400, { error: "Configuración inválida" });
     if (JSON.stringify(c).length > 200000) return send(res, 400, { error: "Configuración muy grande" });
-    await kvSet("config", { ...c, v: Math.max(Number(c.v) || 0, 2) });
-    return send(res, 200, { ok: true });
+    if ((Number(c.v) || 1) < 2) return send(res, 409, { error: "La app está desactualizada. Ciérrala y ábrela de nuevo." });
+    // si alguien guardó entremedio, se rechaza para no pisar su cambio
+    const cur = await kvGet("config");
+    if (b.base != null && cur && Number(b.base) !== cur.updated) return send(res, 409, { error: "La configuración cambió mientras editabas" });
+    const saved = { ...c, v: Number(c.v) };
+    await kvSet("config", saved);
+    const now = await kvGet("config");
+    return send(res, 200, { ok: true, config: now.v, updated: now.updated });
   }
 
   if (b.a === "nota") {

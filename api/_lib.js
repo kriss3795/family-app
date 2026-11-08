@@ -163,5 +163,16 @@ export async function getConfig() {
     const r = await kvGet("config");
     return { cfg: r.v, updated: r.updated };
   }
+  if ((cfg.v || 1) < 3) {
+    // v3: Fauna y perros grandes siempre de Kriss; se quita «doblar ropa» (lo hace la nana)
+    const all = [0, 1, 2, 3, 4, 5, 6];
+    const drop = new Set(["fauna-finde", "fauna-guardar-finde", "ropa-doblar"]); // doblar ropa lo hace la nana
+    const tasks = (cfg.tasks || []).filter(t => !drop.has(t.id)).map(t =>
+      ["fauna", "fauna-guardar", "perros-grandes"].includes(t.id) ? { ...t, assign: "kriss", days: all } : t);
+    cfg = { ...cfg, tasks, v: 3 };
+    await kvSet("config", cfg);
+    const r = await kvGet("config");
+    return { cfg: r.v, updated: r.updated };
+  }
   return { cfg, updated: row.updated };
 }

@@ -147,27 +147,17 @@ export default {
    "name": "Soltar a Fauna",
    "emoji": "🐐",
    "days": [
+    0,
     1,
     2,
     3,
     4,
-    5
-   ],
-   "slot": "manana",
-   "peso": 1,
-   "assign": "kriss"
-  },
-  {
-   "id": "fauna-finde",
-   "name": "Soltar a Fauna",
-   "emoji": "🐐",
-   "days": [
-    0,
+    5,
     6
    ],
    "slot": "manana",
    "peso": 1,
-   "assign": "vale"
+   "assign": "kriss"
   },
   {
    "id": "areneros",
@@ -239,27 +229,17 @@ export default {
    "name": "Guardar a Fauna",
    "emoji": "🌾",
    "days": [
+    0,
     1,
     2,
     3,
     4,
-    5
-   ],
-   "slot": "tarde",
-   "peso": 1,
-   "assign": "kriss"
-  },
-  {
-   "id": "fauna-guardar-finde",
-   "name": "Guardar a Fauna",
-   "emoji": "🌾",
-   "days": [
-    0,
+    5,
     6
    ],
    "slot": "tarde",
    "peso": 1,
-   "assign": "vale"
+   "assign": "kriss"
   },
   {
    "id": "llegada-vale",
@@ -304,17 +284,6 @@ export default {
    "emoji": "🧹",
    "days": [
     6
-   ],
-   "slot": "tarde",
-   "peso": 2,
-   "assign": "vale"
-  },
-  {
-   "id": "ropa-doblar",
-   "name": "Doblar y guardar ropa",
-   "emoji": "👕",
-   "days": [
-    0
    ],
    "slot": "tarde",
    "peso": 2,
@@ -497,5 +466,5 @@ export default {
    "personal": true
   }
  ],
- "v": 2
+ "v": 3
 };

@@ -1,0 +1,15 @@
+name: Avisos Family App
+# Revisa cada 10 minutos si hay tareas por vencer o atrasadas y envía las notificaciones push.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+jobs:
+  avisos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Llamar al revisor de avisos
+        run: curl -fsS --max-time 60 "${APP_URL:-https://family-app.vercel.app}/api/cron"
+        env:
+          APP_URL: ${{ vars.APP_URL }}

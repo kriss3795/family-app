@@ -1,0 +1,15 @@
+{
+  "name": "nuestra-casa",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tareas del hogar en equipo: Kriss y Vale",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.0",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "pg": "^8.13.0"
+  }
+}

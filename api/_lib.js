@@ -198,6 +198,14 @@ export async function getConfig() {
       const n = { ...t, ...ch[t.id] }; if (n.assign !== "alterna") delete n.first; return n;
     }) };
   }
+  // v8: la Vale da comida a los perros chicos (lun-vie, noche) y lava la loza del día en la noche → reparto 50/50
+  if (cfg.v < 8) {
+    const ch = { "perros": { assign: "vale", slot: "noche" }, "loza-dia": { assign: "vale", slot: "noche" } };
+    cfg = { ...cfg, v: 8, tasks: (cfg.tasks || []).map(t => {
+      if (!ch[t.id]) return t;
+      const n = { ...t, ...ch[t.id] }; if (n.assign !== "alterna") delete n.first; return n;
+    }) };
+  }
   if (cfg.v !== start) {
     await kvSet("config", cfg);
     const r = await kvGet("config");

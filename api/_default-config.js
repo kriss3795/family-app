@@ -99,9 +99,9 @@ export default {
     4,
     5
    ],
-   "slot": "manana",
+   "slot": "noche",
    "peso": 1,
-   "assign": "kriss"
+   "assign": "vale"
   },
   {
    "id": "perros-finde",
@@ -187,9 +187,9 @@ export default {
     4,
     5
    ],
-   "slot": "tarde",
+   "slot": "noche",
    "peso": 2,
-   "assign": "kriss"
+   "assign": "vale"
   },
   {
    "id": "barrer",
@@ -453,5 +453,5 @@ export default {
    "personal": true
   }
  ],
- "v": 7
+ "v": 8
 };

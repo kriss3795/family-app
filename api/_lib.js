@@ -210,6 +210,17 @@ export async function getConfig() {
   if (cfg.v < 9) cfg = { ...cfg, v: 9, tasks: (cfg.tasks || []).filter(t => t.id !== "ropa") };
   // v10: el camión de la basura pasa el jueves → Kriss la saca el miércoles en la noche
   if (cfg.v < 10) cfg = { ...cfg, v: 10, tasks: (cfg.tasks || []).map(t => t.id === "basura" ? { ...t, name: "Sacar la basura (pasa el jueves)", assign: "kriss", days: [3], slot: "noche" } : t) };
+  // v11: ordenar el living: Kriss lunes y miércoles; Vale martes, jueves y el resto de los días como antes
+  if (cfg.v < 11) {
+    const tasks = [];
+    for (const t of cfg.tasks || []) {
+      if (t.id === "living") {
+        tasks.push({ ...t, id: "living-kriss", assign: "kriss", days: [1, 3] });
+        const { first, ...r } = t; tasks.push({ ...r, assign: "vale", days: (t.days || []).filter(d => d !== 1 && d !== 3) });
+      } else tasks.push(t);
+    }
+    cfg = { ...cfg, v: 11, tasks };
+  }
   if (cfg.v !== start) {
     await kvSet("config", cfg);
     const r = await kvGet("config");

@@ -389,14 +389,24 @@ export default {
    "assign": "kriss"
   },
   {
+   "id": "living-kriss",
+   "name": "Ordenar el living",
+   "emoji": "🛋️",
+   "days": [
+    1,
+    3
+   ],
+   "slot": "noche",
+   "peso": 1,
+   "assign": "kriss"
+  },
+  {
    "id": "living",
    "name": "Ordenar el living",
    "emoji": "🛋️",
    "days": [
     0,
-    1,
     2,
-    3,
     4,
     5,
     6
@@ -441,5 +451,5 @@ export default {
    "personal": true
   }
  ],
- "v": 10
+ "v": 11
 };

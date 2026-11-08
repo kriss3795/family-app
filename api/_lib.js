@@ -11,7 +11,12 @@ const SLOT_NAMES = { manana: "la mañana", tarde: "la tarde", noche: "la noche" 
 let _q = null;
 async function getQuery() {
   if (_q) return _q;
-  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.DATABASE_URL_UNPOOLED;
+  const env = process.env;
+  const anyPg = () => { // busca cualquier variable con una URL de Postgres (p. ej. STORAGE_URL si Vercel usó otro prefijo)
+    const ks = Object.keys(env).filter(k => /^postgres(ql)?:\/\//.test(String(env[k] || "")));
+    return env[ks.find(k => /DATABASE_URL$/.test(k) && !/UNPOOLED/.test(k)) || ks.find(k => /_URL$/.test(k) && !/UNPOOLED|NO_SSL|NON_POOLING/.test(k)) || ks[0]];
+  };
+  const url = env.DATABASE_URL || env.POSTGRES_URL || env.STORAGE_URL || anyPg();
   if (!url) throw Object.assign(new Error("Falta conectar la base de datos (Neon) en Vercel."), { status: 500 });
   if (process.env.LOCAL_PG) {
     const pg = (await import("pg")).default;

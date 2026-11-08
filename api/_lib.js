@@ -206,6 +206,8 @@ export async function getConfig() {
       const n = { ...t, ...ch[t.id] }; if (n.assign !== "alterna") delete n.first; return n;
     }) };
   }
+  // v9: lavar y tender ropa lo hace la señora que viene → se quita
+  if (cfg.v < 9) cfg = { ...cfg, v: 9, tasks: (cfg.tasks || []).filter(t => t.id !== "ropa") };
   if (cfg.v !== start) {
     await kvSet("config", cfg);
     const r = await kvGet("config");

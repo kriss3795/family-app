@@ -258,17 +258,6 @@ export default {
    "assign": "kriss"
   },
   {
-   "id": "ropa",
-   "name": "Lavar y tender ropa",
-   "emoji": "🧺",
-   "days": [
-    6
-   ],
-   "slot": "tarde",
-   "peso": 2,
-   "assign": "vale"
-  },
-  {
    "id": "microondas",
    "name": "Limpiar microondas y horno",
    "emoji": "🔥",
@@ -453,5 +442,5 @@ export default {
    "personal": true
   }
  ],
- "v": 8
+ "v": 9
 };

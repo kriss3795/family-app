@@ -182,6 +182,10 @@ export async function getConfig() {
       const n = { ...t, ...ch[t.id] }; if (n.assign !== "alterna") delete n.first; return n;
     }) };
   }
+  // v6: cuidar a Momo siempre es de Kriss
+  if (cfg.v < 6) {
+    cfg = { ...cfg, v: 6, tasks: (cfg.tasks || []).map(t => t.id === "momo" ? (({ first, ...r }) => ({ ...r, assign: "kriss" }))(t) : t) };
+  }
   if (cfg.v !== start) {
     await kvSet("config", cfg);
     const r = await kvGet("config");

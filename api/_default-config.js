@@ -399,7 +399,7 @@ export default {
    ],
    "slot": "noche",
    "peso": 1,
-   "assign": "vale"
+   "assign": "kriss"
   },
   {
    "id": "living",
@@ -454,5 +454,5 @@ export default {
    "personal": true
   }
  ],
- "v": 5
+ "v": 6
 };

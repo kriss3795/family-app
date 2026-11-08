@@ -173,7 +173,7 @@ export default {
     6
    ],
    "slot": "tarde",
-   "peso": 1,
+   "peso": 2,
    "assign": "kriss"
   },
   {
@@ -284,7 +284,7 @@ export default {
    "name": "Barrer o aspirar",
    "emoji": "🧹",
    "days": [
-    6
+    0
    ],
    "slot": "tarde",
    "peso": 2,
@@ -348,8 +348,7 @@ export default {
    ],
    "slot": "noche",
    "peso": 2,
-   "assign": "alterna",
-   "first": "kriss"
+   "assign": "vale"
   },
   {
    "id": "aspirar-vale",
@@ -417,8 +416,7 @@ export default {
    ],
    "slot": "noche",
    "peso": 1,
-   "assign": "alterna",
-   "first": "kriss"
+   "assign": "vale"
   },
   {
    "id": "dormitorio",
@@ -456,5 +454,5 @@ export default {
    "personal": true
   }
  ],
- "v": 4
+ "v": 5
 };

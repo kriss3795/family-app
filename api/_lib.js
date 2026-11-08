@@ -174,6 +174,14 @@ export async function getConfig() {
     if (b) { b.assign = "kriss"; b.days = [...new Set([...(b.days || []), 1, 4])].sort(); }
     cfg = { ...cfg, v: 4, tasks };
   }
+  // v5: esfuerzo revisado (areneros = 2) y reparto ~60/40: living y platos del fin de semana pasan a la Vale; aspirar de la Vale pasa al domingo
+  if (cfg.v < 5) {
+    const ch = { "areneros": { peso: 2 }, "living": { assign: "vale" }, "platos-finde": { assign: "vale" }, "aspirar-sab": { days: [0] } };
+    cfg = { ...cfg, v: 5, tasks: (cfg.tasks || []).map(t => {
+      if (!ch[t.id]) return t;
+      const n = { ...t, ...ch[t.id] }; if (n.assign !== "alterna") delete n.first; return n;
+    }) };
+  }
   if (cfg.v !== start) {
     await kvSet("config", cfg);
     const r = await kvGet("config");

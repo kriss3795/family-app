@@ -253,7 +253,7 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:25}
     <h2>Premios</h2>
     <div class="setrow" id="premEdit"><div class="emo">🏆</div><div class="body"><div class="name">Cambiar premios y meta</div><div class="meta" id="premMeta"></div></div><div>›</div></div>
     <h2>Tareas</h2>
-    <p class="hint">Toca una tarea para cambiarla. «Alterna» va turnándose día por medio entre los dos, contando solo los días marcados.</p>
+    <p class="hint">Toca una tarea para cambiarla. Los cambios valen <b>desde hoy en adelante</b>: los días pasados, rachas y premios quedan como estaban. «Alterna» va turnándose día por medio entre los dos, contando solo los días marcados.</p>
     <div id="setlist"></div>
     <div class="row"><button class="btn" id="addBtn">+ Nueva tarea</button></div>
   </section>
@@ -351,10 +351,20 @@ function whoFor(t,date){
   const ds=iso(d0), fl=(t.flips||[]).filter(f=>f<=ds).length; // cada «invertir» cambia desde su fecha en adelante
   return ((Math.abs(idx)+fl)%2===0)?first:other;
 }
+// Historial: cada cambio de tareas vale desde el día en que se hizo; los días anteriores usan la lista que había entonces
+function taskSetFor(ds){
+  const p=((config&&config.past)||[]).filter(x=>x&&ds<x.until&&Array.isArray(x.tasks)).sort((a,b)=>a.until<b.until?-1:1)[0];
+  return p?p.tasks:((config&&config.tasks)||[]);
+}
 function tasksFor(date){
   if(!config||!Array.isArray(config.tasks)) return [];
   const wd=date.getDay();
-  return config.tasks.filter(t=>(t.days||[]).includes(wd)).map(t=>({...t,who:whoFor(t,date)}));
+  return taskSetFor(iso(date)).filter(t=>(t.days||[]).includes(wd)).map(t=>({...t,who:whoFor(t,date)}));
+}
+function saveTasks(tasks){
+  const td=iso(today()); const c={...config,tasks};
+  if((config.tasksFrom||"")!==td){ c.past=[...(config.past||[]),{until:td,tasks:config.tasks}].slice(-30); c.tasksFrom=td; }
+  return saveConfig(c);
 }
 function key(dateStr,taskId){return dateStr+"_"+taskId}
 function isDone(dateStr,taskId){return !!marks[key(dateStr,taskId)]}
@@ -707,7 +717,7 @@ function editTask(i){
   $("#fCancel").onclick=closeSheet;
   if(!isNew) $("#fDel").onclick=async()=>{
     if($("#fDel").dataset.sure!=="1"){$("#fDel").dataset.sure="1";$("#fDel").textContent="¿Seguro?";return}
-    const tasks=config.tasks.filter(x=>x.id!==t.id);if(await saveConfig({...config,tasks}))closeSheet();
+    const tasks=config.tasks.filter(x=>x.id!==t.id);if(await saveTasks(tasks))closeSheet();
   };
   $("#fSave").onclick=async()=>{
     const name=$("#fName").value.trim(); if(!name){$("#fName").focus();return}
@@ -720,7 +730,7 @@ function editTask(i){
     if(!nt.days.length){toast("Elige al menos un día");return}
     const tasks=((config&&config.tasks)||[]).slice(); const at=tasks.findIndex(x=>x.id===t.id);
     if(isNew||at<0) tasks.push(nt); else tasks[at]=nt;
-    if(await saveConfig({...(config||{anchor:"2026-11-09"}),tasks}))closeSheet();
+    if(await saveTasks(tasks))closeSheet();
   };
 }
 let saving=false;

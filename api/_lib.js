@@ -103,9 +103,13 @@ export function whoFor(t, dateStr, config) {
   const fl = (t.flips || []).filter(f => f <= dateStr).length; // «invertir turnos» desde esa fecha
   return (Math.abs(idx) + fl) % 2 === 0 ? first : other;
 }
+function taskSetFor(dateStr, config) {
+  const p = (config.past || []).filter(x => x && dateStr < x.until && Array.isArray(x.tasks)).sort((a, b) => (a.until < b.until ? -1 : 1))[0];
+  return p ? p.tasks : (config.tasks || []);
+}
 export function tasksFor(dateStr, config) {
   const wd = parseDate(dateStr).getUTCDay();
-  return (config.tasks || []).filter(t => (t.days || []).includes(wd)).map(t => ({ ...t, who: whoFor(t, dateStr, config) }));
+  return taskSetFor(dateStr, config).filter(t => (t.days || []).includes(wd)).map(t => ({ ...t, who: whoFor(t, dateStr, config) }));
 }
 export function deadlineOf(t, config) {
   const sl = (config.slots || {})[t.slot || "manana"];

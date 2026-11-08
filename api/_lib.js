@@ -157,19 +157,24 @@ export async function getConfig() {
   const row = await kvGet("config");
   let cfg = row ? row.v : null;
   if (!cfg) return { cfg: DEFAULT_CONFIG, updated: 0 };
-  if ((cfg.v || 1) < 2) {
-    cfg = { ...cfg, tasks: DEFAULT_CONFIG.tasks, v: 2 };
-    await kvSet("config", cfg);
-    const r = await kvGet("config");
-    return { cfg: r.v, updated: r.updated };
+  const start = cfg.v || 1;
+  const all = [0, 1, 2, 3, 4, 5, 6];
+  // v2: tareas de la Vale en la semana pasan a la noche (llega ~18:00), esfuerzo ajustado
+  if ((cfg.v || 1) < 2) cfg = { ...cfg, tasks: DEFAULT_CONFIG.tasks, v: 2 };
+  // v3: Fauna y perros grandes siempre de Kriss; se quita «doblar ropa» (lo hace la nana)
+  if (cfg.v < 3) {
+    const drop = new Set(["fauna-finde", "fauna-guardar-finde", "ropa-doblar"]);
+    cfg = { ...cfg, v: 3, tasks: (cfg.tasks || []).filter(t => !drop.has(t.id)).map(t =>
+      ["fauna", "fauna-guardar", "perros-grandes"].includes(t.id) ? { ...t, assign: "kriss", days: all } : t) };
   }
-  if ((cfg.v || 1) < 3) {
-    // v3: Fauna y perros grandes siempre de Kriss; se quita «doblar ropa» (lo hace la nana)
-    const all = [0, 1, 2, 3, 4, 5, 6];
-    const drop = new Set(["fauna-finde", "fauna-guardar-finde", "ropa-doblar"]); // doblar ropa lo hace la nana
-    const tasks = (cfg.tasks || []).filter(t => !drop.has(t.id)).map(t =>
-      ["fauna", "fauna-guardar", "perros-grandes"].includes(t.id) ? { ...t, assign: "kriss", days: all } : t);
-    cfg = { ...cfg, tasks, v: 3 };
+  // v4: la basura siempre la saca Kriss (lunes y jueves)
+  if (cfg.v < 4) {
+    const tasks = (cfg.tasks || []).filter(t => t.id !== "basura-jue");
+    const b = tasks.find(t => t.id === "basura");
+    if (b) { b.assign = "kriss"; b.days = [...new Set([...(b.days || []), 1, 4])].sort(); }
+    cfg = { ...cfg, v: 4, tasks };
+  }
+  if (cfg.v !== start) {
     await kvSet("config", cfg);
     const r = await kvGet("config");
     return { cfg: r.v, updated: r.updated };

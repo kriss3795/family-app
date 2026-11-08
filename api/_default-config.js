@@ -218,7 +218,8 @@ export default {
    "name": "Sacar la basura",
    "emoji": "🗑️",
    "days": [
-    1
+    1,
+    4
    ],
    "slot": "tarde",
    "peso": 1,
@@ -373,17 +374,6 @@ export default {
    "assign": "vale"
   },
   {
-   "id": "basura-jue",
-   "name": "Sacar la basura",
-   "emoji": "🗑️",
-   "days": [
-    4
-   ],
-   "slot": "noche",
-   "peso": 1,
-   "assign": "vale"
-  },
-  {
    "id": "ficus",
    "name": "Regar el ficus",
    "emoji": "🪴",
@@ -466,5 +456,5 @@ export default {
    "personal": true
   }
  ],
- "v": 3
+ "v": 4
 };

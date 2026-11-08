@@ -16,4 +16,4 @@ Tareas del hogar en equipo para Kriss y Vale: checklist compartido en tiempo rea
 1. Importar el repo en Vercel.
 2. En el proyecto de Vercel → Storage → conectar **Neon** (crea `DATABASE_URL`).
 3. Redeploy. Abrir la app → «Crear nuestra casa» → invitar con el link.
-4. En GitHub → Settings → Secrets and variables → Actions → Variables: `APP_URL` = la URL de Vercel (si no es `https://family-app.vercel.app`).
+4. En GitHub → Settings → Secrets and variables → Actions → Variables: `APP_URL` = la URL de Vercel (si no es `https://family-app-lemon-ten.vercel.app`).

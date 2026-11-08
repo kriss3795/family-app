@@ -126,9 +126,9 @@ export default {
     4,
     5
    ],
-   "slot": "manana",
+   "slot": "noche",
    "peso": 1,
-   "assign": "kriss"
+   "assign": "vale"
   },
   {
    "id": "gatos-finde",
@@ -319,8 +319,7 @@ export default {
    ],
    "slot": "noche",
    "peso": 1,
-   "assign": "alterna",
-   "first": "kriss"
+   "assign": "vale"
   },
   {
    "id": "platos",
@@ -454,5 +453,5 @@ export default {
    "personal": true
   }
  ],
- "v": 6
+ "v": 7
 };

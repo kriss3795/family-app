@@ -186,6 +186,14 @@ export async function getConfig() {
   if (cfg.v < 6) {
     cfg = { ...cfg, v: 6, tasks: (cfg.tasks || []).map(t => t.id === "momo" ? (({ first, ...r }) => ({ ...r, assign: "kriss" }))(t) : t) };
   }
+  // v7: volver a ~60/40 respetando las reglas de Kriss: limpiar cocina y mesones (noches de semana) y la comida de los gatos de lunes a viernes (en la noche) pasan a la Vale
+  if (cfg.v < 7) {
+    const ch = { "cocina-limpia": { assign: "vale" }, "gatos": { assign: "vale", slot: "noche" } };
+    cfg = { ...cfg, v: 7, tasks: (cfg.tasks || []).map(t => {
+      if (!ch[t.id]) return t;
+      const n = { ...t, ...ch[t.id] }; if (n.assign !== "alterna") delete n.first; return n;
+    }) };
+  }
   if (cfg.v !== start) {
     await kvSet("config", cfg);
     const r = await kvGet("config");

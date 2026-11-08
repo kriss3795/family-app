@@ -208,6 +208,8 @@ export async function getConfig() {
   }
   // v9: lavar y tender ropa lo hace la señora que viene → se quita
   if (cfg.v < 9) cfg = { ...cfg, v: 9, tasks: (cfg.tasks || []).filter(t => t.id !== "ropa") };
+  // v10: el camión de la basura pasa el jueves → Kriss la saca el miércoles en la noche
+  if (cfg.v < 10) cfg = { ...cfg, v: 10, tasks: (cfg.tasks || []).map(t => t.id === "basura" ? { ...t, name: "Sacar la basura (pasa el jueves)", assign: "kriss", days: [3], slot: "noche" } : t) };
   if (cfg.v !== start) {
     await kvSet("config", cfg);
     const r = await kvGet("config");

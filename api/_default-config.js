@@ -215,13 +215,12 @@ export default {
   },
   {
    "id": "basura",
-   "name": "Sacar la basura",
+   "name": "Sacar la basura (pasa el jueves)",
    "emoji": "🗑️",
    "days": [
-    1,
-    4
+    3
    ],
-   "slot": "tarde",
+   "slot": "noche",
    "peso": 1,
    "assign": "kriss"
   },
@@ -442,5 +441,5 @@ export default {
    "personal": true
   }
  ],
- "v": 9
+ "v": 10
 };

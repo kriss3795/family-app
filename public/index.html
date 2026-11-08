@@ -129,6 +129,38 @@ input.t,textarea.t,select.t{width:100%;border:1.5px solid var(--line);border-rad
 .gbox input{text-align:center;font-size:24px!important;letter-spacing:6px;text-transform:uppercase}
 .pushb{margin-top:12px;background:#fff;border:2px solid var(--v-soft);border-radius:var(--r);padding:12px 14px;display:flex;gap:10px;align-items:center;font-weight:800;font-size:14px;color:var(--pink)}
 .pushb button{margin-left:auto;flex:none}
+.seg{display:flex;background:#fff;border-radius:16px;padding:4px;margin-top:16px;box-shadow:0 2px 10px rgba(236,79,149,.08)}
+.seg button{flex:1;border:0;background:transparent;font:800 14px Nunito;color:var(--muted);padding:10px;border-radius:12px;cursor:pointer}
+.seg button.on{background:var(--grad);color:#fff}
+.wnav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.wnav h2{flex:1;text-align:center;margin:18px 0 10px;text-transform:capitalize}
+.nb{width:40px;height:40px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--pink);font:800 22px Nunito;cursor:pointer;flex:none}
+.more{margin-top:8px;border:0;background:transparent;color:var(--pink);font:800 13px Nunito;cursor:pointer;padding:4px 0}
+.dlist{margin-top:8px;display:none}
+.dlist.on{display:block}
+.drow{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid #FBEAF1;font-size:14px;font-weight:600}
+.drow .e{width:24px;text-align:center}
+.drow .n{flex:1}
+.drow .ok{font-size:15px}
+.drow.done .n{text-decoration:line-through;opacity:.6}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal .wd{text-align:center;font-size:11px;font-weight:800;color:var(--muted);padding:4px 0}
+.cell{aspect-ratio:1/1.12;border-radius:12px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:5px 2px;cursor:pointer;position:relative;border:2px solid transparent;font-weight:800;font-size:14px;box-shadow:0 1px 6px rgba(236,79,149,.06)}
+.cell.out{opacity:.25;pointer-events:none}
+.cell.today{border-color:var(--pink)}
+.cell .p{font-size:10px;font-weight:800;color:#fff;border-radius:6px;padding:0 4px}
+.cell .dots{display:flex;gap:3px;height:8px}
+.cell .dots i{width:7px;height:7px;border-radius:50%;display:block}
+.cell .tro{position:absolute;top:-6px;right:-4px;font-size:13px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;font-weight:700;color:var(--muted);margin:12px 0}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.dsheet .grp{font:800 12px Nunito;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 6px}
+.dsheet .it{display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:6px;font-weight:700}
+.dsheet .it .ck{margin-left:auto;width:30px;height:30px;border-radius:50%;border:2.5px solid #F4C6DA;display:grid;place-items:center;color:#fff;font-size:15px;cursor:pointer;flex:none}
+.dsheet .it.done .ck{background:var(--k);border-color:var(--k)}
+.dsheet .it.done.byvale .ck{background:var(--v);border-color:var(--v)}
+.dsheet .it.done span.nm{text-decoration:line-through;opacity:.6}
 canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:25}
 .hint{font-size:13px;color:var(--muted);line-height:1.5}
 .quote{margin-top:14px;font-family:Fredoka,system-ui,sans-serif;font-weight:600;font-size:20px;line-height:1.3;padding:16px;border-radius:var(--r);color:#fff;min-height:170px;display:flex;flex-direction:column;justify-content:flex-end;
@@ -187,8 +219,17 @@ canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:25}
 
   <!-- SEMANA -->
   <section class="view" id="v-semana">
-    <h2 id="weekTitle">Esta semana</h2>
-    <div class="week" id="week"></div>
+    <div class="seg" id="semSeg"><button class="on" data-m="sem">🗓️ Semana</button><button data-m="cal">📅 Calendario</button></div>
+    <div id="semWrap">
+      <div class="wnav"><button class="nb" id="wPrev">‹</button><h2 id="weekTitle">Esta semana</h2><button class="nb" id="wNext">›</button></div>
+      <div class="week" id="week"></div>
+    </div>
+    <div id="calWrap" style="display:none">
+      <div class="wnav"><button class="nb" id="cPrev">‹</button><h2 id="calTitle"></h2><button class="nb" id="cNext">›</button></div>
+      <div class="cal" id="cal"></div>
+      <div class="legend" id="calLegend"></div>
+      <div id="calSum"></div>
+    </div>
   </section>
 
   <!-- PREMIOS -->
@@ -442,27 +483,94 @@ function balanceCard(title,b,sub){
    <div class="tbar"><i style="width:${b.kp}%;background:var(--k)"></i><i style="width:${b.vp}%;background:var(--v)"></i></div>
    <div class="sub">${sub||"Se calcula según el esfuerzo de cada tarea. El autocuidado no suma."}</div></div>`;
 }
+let weekOff=0, calOff=0, semMode="sem", openDays={};
+function dayRows(d){
+  const ds=iso(d), list=tasksFor(d), order=SLOTS.map(s=>s.id);
+  list.sort((a,b)=>order.indexOf(a.slot)-order.indexOf(b.slot));
+  return list.map(x=>{const m=marks[key(ds,x.id)];return `<div class="drow ${m?"done":""}"><span class="e">${esc(x.emoji)}</span><span class="n">${esc(x.name)}</span><span class="chip ${esc(x.who)}">${esc(NAMES[x.who]||x.who)}</span><span class="ok">${m?"✅":""}</span></div>`}).join("");
+}
 function renderSemana(){
   if(!loaded.config){$("#week").innerHTML="";return}
-  const t=today(); const {mon,label}=weekStartForView();
-  $("#weekTitle").textContent=label;
+  const t=today(); const base=weekStartForView(); const mon=addDays(base.mon,weekOff*7);
+  const sun=addDays(mon,6);
+  $("#weekTitle").textContent=weekOff===0?base.label:(mon.getDate()+" "+mon.toLocaleDateString("es-CL",{month:"short"})+" – "+sun.getDate()+" "+sun.toLocaleDateString("es-CL",{month:"short"}));
   const b=balance(mon,7);
   const turns={kriss:0,vale:0}; for(let i=0;i<5;i++){const c=tasksFor(addDays(mon,i)).find(x=>x.id==="cocinar"); if(c&&turns[c.who]!=null) turns[c.who]++}
   let h=balanceCard("Reparto de la semana",b)+
-    `<div class="hint" style="margin:-2px 0 10px">🍳 Cocina: ${NAMES.kriss} ${turns.kriss} noches · ${NAMES.vale} ${turns.vale} noches. Los turnos siguen corriendo, así que la semana siguiente se invierte y queda parejo.</div>`;
+    `<div class="hint" style="margin:-2px 0 10px">🍳 Cocina: ${esc(NAMES.kriss)} ${turns.kriss} noches · ${esc(NAMES.vale)} ${turns.vale} noches. Los turnos siguen corriendo, así que la semana siguiente se invierte y queda parejo.</div>`;
   for(let i=0;i<7;i++){
     const d=addDays(mon,i), ds=iso(d), isT=ds===iso(t);
     const list=tasksFor(d);
     const done=list.filter(x=>isDone(ds,x.id)).length;
     const alts=list.filter(x=>x.assign==="alterna");
-    const pts={kriss:0,vale:0}; list.forEach(x=>{if(x.personal)return;const p=+x.peso||1;if(x.who==="ambos"){pts.kriss+=p/2;pts.vale+=p/2}else if(pts[x.who]!=null)pts[x.who]+=p});
-    let roles=alts.map(x=>`${esc(x.emoji)} ${esc(x.name)}: <span class="chip ${x.who}">${esc(NAMES[x.who])}</span>`).join("<br>");
+    const cnt={kriss:0,vale:0}; list.forEach(x=>{if(cnt[x.who]!=null)cnt[x.who]++});
+    let roles=alts.map(x=>`${esc(x.emoji)} ${esc(x.name)}: <span class="chip ${esc(x.who)}">${esc(NAMES[x.who])}</span>`).join("<br>");
     if(!roles) roles=`<span class="hint">Sin turnos alternados${d.getDay()===0||d.getDay()===6?" · sobras de asado 🍖":""}</span>`;
-    const past=d<=t;
+    const past=d<=t, open=!!openDays[ds];
     h+=`<div class="day ${isT?"today":""}"><div class="dh">${DAYNAMES[d.getDay()]} ${d.getDate()}<span>${past?done+"/"+list.length:list.length+" tareas"}</span></div>
-      <div class="roles">${roles}</div>${past?`<div class="bar"><i style="width:${list.length?Math.round(done/list.length*100):0}%"></i></div>`:""}</div>`;
+      <div class="roles">${roles}</div>${past?`<div class="bar"><i style="width:${list.length?Math.round(done/list.length*100):0}%"></i></div>`:""}
+      <button class="more" data-ds="${ds}">${open?"Ver menos ▴":`Ver todas (${esc(NAMES.kriss)} ${cnt.kriss} · ${esc(NAMES.vale)} ${cnt.vale}) ▾`}</button>
+      <div class="dlist ${open?"on":""}">${open?dayRows(d):""}</div></div>`;
   }
   $("#week").innerHTML=h;
+  document.querySelectorAll("#week .more").forEach(bt=>bt.onclick=()=>{openDays[bt.dataset.ds]=!openDays[bt.dataset.ds];renderSemana()});
+  renderCal();
+}
+
+// ---------- calendario ----------
+function dayPct(d){const ds=iso(d),l=tasksFor(d);if(!l.length)return null;return l.filter(x=>isDone(ds,x.id)).length/l.length}
+function pinkFor(p){ // de rosado muy suave a fucsia
+  const a=[255,232,241],b=[236,79,149]; return "rgb("+a.map((x,i)=>Math.round(x+(b[i]-x)*p)).join(",")+")";
+}
+function renderCal(){
+  if(!loaded.config||!$("#cal")) return;
+  const t=today(), t0=new Date(t.getFullYear(),t.getMonth(),t.getDate());
+  const first=new Date(t.getFullYear(),t.getMonth()+calOff,1), last=new Date(first.getFullYear(),first.getMonth()+1,0);
+  const anchor=parse((config&&config.anchor)||"2026-11-09"), meta=prizes().meta/100;
+  $("#calTitle").textContent=first.toLocaleDateString("es-CL",{month:"long",year:"numeric"});
+  let h=["L","M","X","J","V","S","D"].map(x=>`<div class="wd">${x}</div>`).join("");
+  const lead=(first.getDay()+6)%7; for(let i=0;i<lead;i++) h+=`<div class="cell out"></div>`;
+  let mDone=0,mTot=0,best=0,run=0,weeksWon=0;
+  for(let n=1;n<=last.getDate();n++){
+    const d=new Date(first.getFullYear(),first.getMonth(),n), ds=iso(d), past=d<=t0, before=d<anchor;
+    const l=tasksFor(d), dn=l.filter(x=>isDone(ds,x.id)).length, p=l.length?dn/l.length:0;
+    const cook=l.find(x=>x.id==="cocinar");
+    let bg="#fff", col="var(--ink)", lbl="";
+    if(past&&!before&&l.length){mDone+=dn;mTot+=l.length; bg=pinkFor(p); col=p>.55?"#fff":"var(--ink)"; lbl=`<span class="p" style="background:${p>=meta?"var(--k)":"rgba(0,0,0,.18)"}">${Math.round(p*100)}%</span>`;
+      if(p>=meta){run++;best=Math.max(best,run)} else if(ds!==iso(t0)) run=0;}
+    // premio semanal ganado (viernes)
+    let tro="";
+    if(d.getDay()===5&&!before){const mon=addDays(d,-4);const s=rangeStats(mon<anchor?anchor:mon,d);if(d<t0&&s.total&&s.pct>=prizes().meta){tro=`<span class="tro">🏆</span>`;weeksWon++}}
+    const dots=cook&&!before?`<i style="background:${cook.who==="vale"?"var(--v)":"var(--k)"}"></i>`:"";
+    h+=`<div class="cell ${ds===iso(t0)?"today":""}" data-ds="${ds}" style="background:${bg};color:${col}">${tro}<span>${n}</span>${lbl||`<span class="dots">${dots}</span>`}</div>`;
+  }
+  $("#cal").innerHTML=h;
+  $("#calLegend").innerHTML=`<span><i style="background:var(--k)"></i>cocina ${esc(NAMES.kriss)}</span><span><i style="background:var(--v)"></i>cocina ${esc(NAMES.vale)}</span><span><i style="background:${pinkFor(1)}"></i>más rosado = más cumplido</span><span>🏆 semana ganada</span>`;
+  const pct=mTot?Math.round(mDone/mTot*100):0;
+  $("#calSum").innerHTML=balanceCard("Reparto del mes",balance(first,last.getDate()),`Cumplido del mes: ${pct}% · ${weeksWon} semana${weeksWon===1?"":"s"} con premio · mejor racha: ${best} día${best===1?"":"s"} sobre la meta`);
+  document.querySelectorAll("#cal .cell[data-ds]").forEach(c=>c.onclick=()=>openDay(c.dataset.ds));
+}
+function openDay(ds){
+  const d=parse(ds), t=today(), t0=new Date(t.getFullYear(),t.getMonth(),t.getDate());
+  const editable=d<=t0&&d>=addDays(t0,-7);
+  const l=tasksFor(d), order=SLOTS.map(s=>s.id);
+  const draw=()=>{
+    let h=`<div class="dsheet"><h3 style="text-transform:capitalize">${d.toLocaleDateString("es-CL",{weekday:"long",day:"numeric",month:"long"})}</h3>`;
+    if(!l.length) h+=`<p class="hint">No hay tareas este día.</p>`;
+    else{
+      const dn=l.filter(x=>isDone(ds,x.id)).length;
+      h+=`<p class="hint">${d<=t0?`Cumplido: ${dn} de ${l.length}`:"Lo que viene ese día"}${editable&&d<t0?" · puedes marcar lo que se te olvidó":""}</p>`;
+      for(const p of ["kriss","vale","ambos"]){
+        const it=l.filter(x=>x.who===p).sort((a,b)=>order.indexOf(a.slot)-order.indexOf(b.slot)); if(!it.length) continue;
+        h+=`<div class="grp">${p==="ambos"?"Los dos":esc(NAMES[p])}</div>`;
+        h+=it.map(x=>{const m=marks[key(ds,x.id)];return `<div class="it ${m?"done":""} ${m&&m.by==="vale"?"byvale":""}"><span>${esc(x.emoji)}</span><span class="nm">${esc(x.name)}</span>${editable?`<span class="ck" data-id="${esc(x.id)}">${m?"✓":""}</span>`:(m?`<span class="ck" style="cursor:default">✓</span>`:"")}</div>`}).join("");
+      }
+    }
+    h+=`<div class="row"><button class="btn ghost" id="x">Cerrar</button></div></div>`;
+    openSheet(h); $("#x").onclick=closeSheet;
+    document.querySelectorAll(".dsheet .ck[data-id]").forEach(c=>c.onclick=async()=>{await toggle(c.dataset.id,{date:ds});draw()});
+  };
+  draw();
 }
 
 function describeDays(days){
@@ -551,7 +659,7 @@ let markGen=0;
 async function toggle(id,opt){
   if(!CODE){showGate();return}
   if(!me){pickMe();return}
-  const ds=iso(today()), k=key(ds,id);
+  const ds=(opt&&opt.date)||iso(today()), k=key(ds,id);
   if(busy[k]) return; busy[k]=true; markGen++;
   const was=!!marks[k], prevMark=marks[k];
   if(was&&opt&&opt.onlyMark){busy[k]=false;return}
@@ -562,7 +670,7 @@ async function toggle(id,opt){
       await api("/api/state",{a:"mark",date:ds,task:id,by:me});
       if(navigator.vibrate) try{navigator.vibrate(18)}catch(e){}
       const arr=CHEERS[me]||CHEERS.kriss;
-      const s=stats(today(),me);
+      const s=stats(parse(ds),me);
       if(s.total&&s.done===s.total){confetti();toast("🎉 ¡Día completo! Eres un crack")}
       else {burst();toast(arr[Math.floor(Math.random()*arr.length)])}
     }
@@ -772,6 +880,9 @@ document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
   window.scrollTo(0,0);
 });
 $("#premEdit").onclick=editPrizes;
+document.querySelectorAll("#semSeg button").forEach(b=>b.onclick=()=>{semMode=b.dataset.m;document.querySelectorAll("#semSeg button").forEach(x=>x.classList.toggle("on",x===b));$("#semWrap").style.display=semMode==="sem"?"":"none";$("#calWrap").style.display=semMode==="cal"?"":"none";renderSemana()});
+$("#wPrev").onclick=()=>{weekOff--;renderSemana()}; $("#wNext").onclick=()=>{weekOff++;renderSemana()};
+$("#cPrev").onclick=()=>{calOff--;renderCal()}; $("#cNext").onclick=()=>{calOff++;renderCal()};
 let deferredPrompt=null;
 addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e});
 function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)}

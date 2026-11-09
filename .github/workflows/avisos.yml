@@ -1,15 +1,34 @@
 name: Avisos The House App
-# Revisa cada 10 minutos si hay tareas por vencer o atrasadas y envía las notificaciones push.
+# GitHub no garantiza los horarios "schedule" (en repos nuevos corren cada varias horas).
+# Por eso cada ejecución se queda revisando cada 5 minutos durante ~5 h 45 min y al terminar
+# lanza la siguiente. El "schedule" queda solo como respaldo por si la cadena se corta.
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/30 * * * *"
   workflow_dispatch:
+permissions:
+  actions: write
+  contents: read
+concurrency:
+  group: avisos
+  cancel-in-progress: false
 jobs:
   avisos:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 355
+    env:
+      APP_URL: ${{ vars.APP_URL || 'https://thehouseapp.vercel.app' }}
     steps:
-      - name: Llamar al revisor de avisos
-        run: curl -fsS --max-time 60 "${APP_URL:-https://thehouseapp.vercel.app}/api/cron"
+      - name: Revisar avisos cada 5 minutos
+        run: |
+          end=$(( $(date +%s) + 20700 ))
+          while [ "$(date +%s)" -lt "$end" ]; do
+            curl -fsS --max-time 60 "$APP_URL/api/cron" || echo "falló, reintento en 5 min"
+            echo
+            sleep 300
+          done
+      - name: Lanzar la siguiente ronda
+        if: always()
+        run: gh workflow run avisos.yml -R "${{ github.repository }}" --ref main
         env:
-          APP_URL: ${{ vars.APP_URL }}
+          GH_TOKEN: ${{ github.token }}

@@ -166,6 +166,8 @@ input.t,textarea.t,select.t{width:100%;border:1.5px solid var(--line);border-rad
 .tbar-run{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(74px + env(safe-area-inset-bottom));z-index:15;background:var(--grad);color:#fff;border-radius:999px;padding:10px 16px;font:800 14px Nunito;box-shadow:0 8px 20px rgba(236,79,149,.35);display:none;align-items:center;gap:10px;cursor:pointer;font-variant-numeric:tabular-nums}
 .tbar-run.on{display:flex}
 .tsheet{text-align:center}
+.tmset{display:flex;align-items:center;justify-content:center;gap:8px;font:700 18px Fredoka,sans-serif}
+.tmset b{font-size:26px;color:var(--pink);min-width:36px;display:inline-block}
 .tsheet .big{font:700 56px Fredoka,sans-serif;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:-118px;margin-bottom:70px}
 .tsheet .row .btn{font-size:16px;padding:14px}
 canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:25}
@@ -917,10 +919,15 @@ function drawTimer(){
     <circle id="tmRing" cx="115" cy="115" r="${R}" fill="none" stroke="url(#tg)" stroke-width="16" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-p)}" transform="rotate(-90 115 115)"/>
     <defs><linearGradient id="tg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF7DB5"/><stop offset="1" stop-color="#B65CFF"/></linearGradient></defs></svg>
     <div class="big" id="tmText">${fmt(left)}</div>
-    <p class="hint" id="tmHint">${TMR.fresh?"Toca empezar cuando te subas a la elíptica 💪":TMR.paused?"En pausa":"¡Vamos! Mantén el ritmo 🔥"}</p>
+    ${TMR.fresh?`<div class="tmset"><button class="nb" data-d="-5">−5</button><button class="nb" data-d="-1">−1</button><span><b id="tmMin">${Math.round(TMR.dur/60000)}</b> min</span><button class="nb" data-d="1">+1</button><button class="nb" data-d="5">+5</button></div>
+    <div class="pills" style="justify-content:center;margin-top:8px">${[10,15,20,30].map(m=>`<button class="pill ${Math.round(TMR.dur/60000)===m?"on":""}" data-m="${m}">${m} min</button>`).join("")}</div>`:""}
+    <p class="hint" id="tmHint">${TMR.fresh?"Elige los minutos y toca empezar cuando te subas a la elíptica 💪":TMR.paused?"En pausa":"¡Vamos! Mantén el ritmo 🔥"}</p>
     <div class="row">${TMR.paused?`<button class="btn" id="tmGo">${TMR.fresh?"▶ Empezar":"▶ Seguir"}</button>`:`<button class="btn ghost" id="tmPause">⏸ Pausar</button>`}</div>
     <div class="row"><button class="btn ghost" id="tmDone">✓ Ya terminé</button><button class="btn ghost" id="tmHide">Minimizar</button></div>
     <div class="row" style="margin-top:6px"><button class="btn danger small" id="tmCancel">Cancelar cronómetro</button></div></div>`);
+  const setMin=m=>{m=Math.max(1,Math.min(90,m));TMR.dur=TMR.left=m*60000;drawTimer()};
+  document.querySelectorAll(".tmset .nb").forEach(b=>b.onclick=()=>setMin(Math.round(TMR.dur/60000)+(+b.dataset.d)));
+  document.querySelectorAll(".tsheet .pill[data-m]").forEach(b=>b.onclick=()=>setMin(+b.dataset.m));
   if($("#tmGo")) $("#tmGo").onclick=()=>{TMR.start=Date.now();TMR.paused=false;TMR.fresh=false;saveTmr();lockScreen(true);chime("soon");drawTimer()};
   if($("#tmPause")) $("#tmPause").onclick=()=>{TMR.left=tmrLeft();TMR.paused=true;saveTmr();lockScreen(false);drawTimer()};
   $("#tmDone").onclick=()=>finishTimer(true);
@@ -928,13 +935,13 @@ function drawTimer(){
   $("#tmCancel").onclick=()=>{TMR=null;saveTmr();lockScreen(false);closeSheet();tickTimer();renderHoy()};
 }
 async function finishTimer(early){
-  if(!TMR) return; const {id,ds}=TMR; TMR=null; saveTmr(); lockScreen(false);
+  if(!TMR) return; const {id,ds}=TMR; const mn=Math.round(TMR.dur/60000); TMR=null; saveTmr(); lockScreen(false);
   chime("partner"); setTimeout(()=>chime("partner"),700);
   try{navigator.vibrate&&navigator.vibrate([300,120,300,120,500])}catch(e){}
   confetti();
   if(!marks[key(ds,id)]) await toggle(id,{onlyMark:true,date:ds});
   const shower=tasksFor(parse(ds)).find(x=>x.id==="ducha"&&x.who===me&&!isDone(ds,"ducha"));
-  openSheet(`<div class="tsheet"><div style="font-size:64px">🎉</div><h3>${early?"¡Bien hecho!":"¡15 minutos listos!"}</h3><p class="hint">${shower?"Ahora a la ducha 🚿 y quedas como nuevo.":"Tu cuerpo y tu cabeza te lo agradecen 💪"}</p><div class="row"><button class="btn" id="x">${shower?"Voy a la ducha 🚿":"Seguir"}</button></div></div>`);
+  openSheet(`<div class="tsheet"><div style="font-size:64px">🎉</div><h3>${early?"¡Bien hecho!":"¡"+mn+" minutos listos!"}</h3><p class="hint">${shower?"Ahora a la ducha 🚿 y quedas como nuevo.":"Tu cuerpo y tu cabeza te lo agradecen 💪"}</p><div class="row"><button class="btn" id="x">${shower?"Voy a la ducha 🚿":"Seguir"}</button></div></div>`);
   $("#x").onclick=closeSheet; sysNotify("The House App","¡Elíptica lista! "+(shower?"Ahora a la ducha 🚿":"💪"));
 }
 function tickTimer(){

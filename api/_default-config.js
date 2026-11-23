@@ -19,17 +19,51 @@ export default {
  "frases": [],
  "tasks": [
   {
-   "id": "ducha",
-   "name": "Ducharme",
-   "emoji": "🚿",
+   "id": "eliptica-kriss",
+   "name": "15 minutos de elíptica",
+   "emoji": "🏃",
+   "assign": "kriss",
    "days": [
-    0,
     1,
     2,
     3,
     4,
-    5,
-    6
+    5
+   ],
+   "slot": "manana",
+   "hora": "18:00",
+   "peso": 1,
+   "personal": true,
+   "timer": 15
+  },
+  {
+   "id": "eliptica-vale",
+   "name": "15 minutos de elíptica",
+   "emoji": "🏃",
+   "assign": "vale",
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "slot": "manana",
+   "hora": "20:00",
+   "peso": 1,
+   "personal": true,
+   "timer": 15
+  },
+  {
+   "id": "ducha",
+   "name": "Ducharme (después de la elíptica)",
+   "emoji": "🚿",
+   "days": [
+    1,
+    2,
+    3,
+    4,
+    5
    ],
    "slot": "manana",
    "peso": 1,
@@ -41,13 +75,11 @@ export default {
    "name": "Lavarme los dientes",
    "emoji": "🪥",
    "days": [
-    0,
     1,
     2,
     3,
     4,
-    5,
-    6
+    5
    ],
    "slot": "manana",
    "peso": 1,
@@ -59,13 +91,11 @@ export default {
    "name": "Hacer la cama",
    "emoji": "🛏️",
    "days": [
-    0,
     1,
     2,
     3,
     4,
-    5,
-    6
+    5
    ],
    "slot": "manana",
    "peso": 1,
@@ -76,13 +106,11 @@ export default {
    "name": "Comida y agua a los perros grandes (afuera)",
    "emoji": "🦮",
    "days": [
-    0,
     1,
     2,
     3,
     4,
-    5,
-    6
+    5
    ],
    "slot": "manana",
    "peso": 1,
@@ -104,18 +132,6 @@ export default {
    "assign": "vale"
   },
   {
-   "id": "perros-finde",
-   "name": "Comida y agua a los perros chicos",
-   "emoji": "🐕",
-   "days": [
-    0,
-    6
-   ],
-   "slot": "manana",
-   "peso": 1,
-   "assign": "vale"
-  },
-  {
    "id": "gatos",
    "name": "Comida y agua a los gatos",
    "emoji": "🐱",
@@ -131,29 +147,15 @@ export default {
    "assign": "vale"
   },
   {
-   "id": "gatos-finde",
-   "name": "Comida y agua a los gatos",
-   "emoji": "🐱",
-   "days": [
-    0,
-    6
-   ],
-   "slot": "manana",
-   "peso": 1,
-   "assign": "vale"
-  },
-  {
    "id": "fauna",
    "name": "Soltar a Fauna",
    "emoji": "🐐",
    "days": [
-    0,
     1,
     2,
     3,
     4,
-    5,
-    6
+    5
    ],
    "slot": "manana",
    "peso": 1,
@@ -164,13 +166,11 @@ export default {
    "name": "Limpiar areneros",
    "emoji": "🐈",
    "days": [
-    0,
     1,
     2,
     3,
     4,
-    5,
-    6
+    5
    ],
    "slot": "tarde",
    "peso": 2,
@@ -229,13 +229,11 @@ export default {
    "name": "Guardar a Fauna",
    "emoji": "🌾",
    "days": [
-    0,
     1,
     2,
     3,
     4,
-    5,
-    6
+    5
    ],
    "slot": "tarde",
    "peso": 1,
@@ -255,28 +253,6 @@ export default {
    "slot": "tarde",
    "peso": 1,
    "assign": "kriss"
-  },
-  {
-   "id": "microondas",
-   "name": "Limpiar microondas y horno",
-   "emoji": "🔥",
-   "days": [
-    6
-   ],
-   "slot": "tarde",
-   "peso": 2,
-   "assign": "vale"
-  },
-  {
-   "id": "aspirar-sab",
-   "name": "Barrer o aspirar",
-   "emoji": "🧹",
-   "days": [
-    0
-   ],
-   "slot": "tarde",
-   "peso": 2,
-   "assign": "vale"
   },
   {
    "id": "cocinar",
@@ -326,18 +302,6 @@ export default {
    "first": "vale"
   },
   {
-   "id": "platos-finde",
-   "name": "Lavar los platos",
-   "emoji": "🍽️",
-   "days": [
-    0,
-    6
-   ],
-   "slot": "noche",
-   "peso": 2,
-   "assign": "vale"
-  },
-  {
    "id": "aspirar-vale",
    "name": "Barrer o aspirar",
    "emoji": "🧹",
@@ -364,8 +328,7 @@ export default {
    "name": "Regar el ficus",
    "emoji": "🪴",
    "days": [
-    3,
-    6
+    3
    ],
    "slot": "noche",
    "peso": 1,
@@ -376,13 +339,11 @@ export default {
    "name": "Cuidar a Momo (comida y terrario)",
    "emoji": "🐿️",
    "days": [
-    0,
     1,
     2,
     3,
     4,
-    5,
-    6
+    5
    ],
    "slot": "noche",
    "peso": 1,
@@ -418,13 +379,11 @@ export default {
    "name": "Ordenar el dormitorio",
    "emoji": "🧸",
    "days": [
-    0,
     1,
     2,
     3,
     4,
-    5,
-    6
+    5
    ],
    "slot": "noche",
    "peso": 1,
@@ -435,13 +394,11 @@ export default {
    "name": "Lavarme los dientes (noche)",
    "emoji": "🌙",
    "days": [
-    0,
     1,
     2,
     3,
     4,
-    5,
-    6
+    5
    ],
    "slot": "noche",
    "peso": 1,
@@ -449,5 +406,5 @@ export default {
    "personal": true
   }
  ],
- "v": 12
+ "v": 13
 };

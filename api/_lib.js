@@ -223,6 +223,19 @@ export async function getConfig() {
   }
   // v12: el living no se ordena el fin de semana
   if (cfg.v < 12) cfg = { ...cfg, v: 12, tasks: (cfg.tasks || []).map(t => t.id === "living" ? { ...t, days: (t.days || []).filter(d => d !== 0 && d !== 6) } : t).filter(t => t.id !== "living" || t.days.length) };
+  // v13 (23-nov): elíptica 15 min para los dos de lunes a viernes (con cronómetro), ducha después de la elíptica
+  // y nada el fin de semana. Vale desde hoy: los días anteriores quedan con la lista que había.
+  if (cfg.v < 13) {
+    const today = nowLocal().date;
+    const old = cfg.tasks || [];
+    const WD = [1, 2, 3, 4, 5];
+    let tasks = old.map(t => ({ ...t, days: (t.days || []).filter(d => WD.includes(d)) })).filter(t => t.days.length);
+    tasks = tasks.map(t => t.id === "ducha" ? { ...t, name: "Ducharme (después de la elíptica)" } : t);
+    const eli = p => ({ id: "eliptica-" + p, name: "15 minutos de elíptica", emoji: "🏃", assign: p, days: WD, slot: "manana", hora: p === "vale" ? "20:00" : "18:00", peso: 1, personal: true, timer: 15 });
+    if (!tasks.some(t => t.id === "eliptica-kriss")) tasks = [eli("kriss"), eli("vale"), ...tasks];
+    const past = cfg.tasksFrom === today ? (cfg.past || []) : [...(cfg.past || []), { until: today, tasks: old }].slice(-30);
+    cfg = { ...cfg, v: 13, tasks, past, tasksFrom: today };
+  }
   if (cfg.v !== start) {
     await kvSet("config", cfg);
     const r = await kvGet("config");
